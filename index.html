@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestor de Conductor 🚖</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2, h3 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button.secondary {
+      background: #6c757d;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 5px 0;
+      padding: 6px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+    #resultado p, #totales p {
+      margin: 5px 0;
+    }
+    canvas {
+      display: none; /* ocultamos el gráfico en la página, solo se usará para exportar al PDF */
+    }
+  </style>
+  <!-- Librerías -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- Pantalla de inicio -->
+<div class="container" id="inicio">
+  <h2>🚖 Bienvenido al Gestor de Conductor</h2>
+  <button onclick="seleccionarVersion(false)">Versión Gratis</button>
+  <button onclick="seleccionarVersion(true)">Versión Premium</button>
+</div>
+
+<!-- Pantalla Premium -->
+<div class="container" id="premium" style="display:none;">
+  <h2>🔒 Versión Premium</h2>
+  <p>Si ya pagaste, ingresa tu código de acceso:</p>
+  <input type="password" id="codigoPremium" placeholder="Código de acceso">
+  <button onclick="validarCodigo()">Validar acceso</button>
+  <button class="secondary" onclick="volverInicio()">Volver al inicio</button>
+</div>
+
+<!-- Pantalla principal -->
+<div class="container" id="main" style="display:none;">
+  <h2>🚕 Registro de Carreras</h2>
+  <input type="number" id="tarifa" placeholder="Ganancia total del día ($)">
+  <input type="number" id="gasolina" placeholder="Gasolina ($)">
+  <input type="number" id="carro" placeholder="Pago del carro ($, opcional)">
+  <input type="number" id="mantenimiento" placeholder="Mantenimiento ($, opcional)">
+  <input type="number" id="otros" placeholder="Otros gastos ($, opcional)">
+  <input type="number" id="tiempo" placeholder="Tiempo (horas)">
+  <button onclick="calcular()">Calcular Ganancia Neta</button>
+  <div id="resultado"></div>
+  <button onclick="guardarCarrera()">Guardar Carrera</button>
+  <button onclick="verHistorial()">Ver Historial</button>
+  <button class="secondary" onclick="volverInicio()">Volver al inicio</button>
+</div>
+
+<!-- Pantalla historial -->
+<div class="container" id="historial" style="display:none;">
+  <h2>📜 Historial de Carreras</h2>
+  <p id="conteoHoy"></p>
+  <ul id="listaHistorial"></ul>
+  
+  <h3>📊 Totales acumulados</h3>
+  <div id="totales"></div>
+
+  <button class="secondary" onclick="volverAtras()">⬅️ Volver atrás</button>
+  <button class="secondary" onclick="resetearHistorial()" id="btnReset" style="display:none;">🗑️ Resetear Historial</button>
+  <button class="secondary" onclick="descargarPDF()" id="btnPDF" style="display:none;">📑 Descargar Informe PDF</button>
+</div>
+
+<!-- Canvas oculto para generar gráfico -->
+<canvas id="graficoPDF" width="400" height="200"></canvas>
+
+<script>
+  const { jsPDF } = window.jspdf;
+  const CLAVE_PREMIUM = "0000"; // Cambia esto
+  let ultimoResultado = null;
+  let listaCarreras = [];
+
+  function mostrarPantalla(id) {
+    document.querySelectorAll(".container").forEach(c => c.style.display = "none");
+    document.getElementById(id).style.display = "block";
+  }
+
+  function volverInicio() {
+    mostrarPantalla("inicio");
+  }
+
+  function seleccionarVersion(premium) {
+    mostrarPantalla(premium ? "premium" : "main");
+  }
+
+  function validarCodigo() {
+    let codigo = document.getElementById("codigoPremium").value;
+    if (codigo === CLAVE_PREMIUM) {
+      localStorage.setItem("premiumActivo", "true");
+      alert("✅ Acceso Premium habilitado");
+      mostrarPantalla("main");
+    } else {
+      alert("❌ Código incorrecto");
+    }
+  }
+
+  function volverAtras() {
+    mostrarPantalla("main");
+  }
+
+  function calcular() {
+    let tarifa = parseFloat(document.getElementById("tarifa").value) || 0;
+    let gasolina = parseFloat(document.getElementById("gasolina").value) || 0;
+    let carro = parseFloat(document.getElementById("carro").value) || 0;
+    let mantenimiento = parseFloat(document.getElementById("mantenimiento").value) || 0;
+    let otros = parseFloat(document.getElementById("otros").value) || 0;
+    let tiempo = parseFloat(document.getElementById("tiempo").value) || 0;
+
+    if (tarifa === 0 || tiempo === 0) {
+      alert("Por favor ingresa al menos la ganancia y el tiempo en horas");
+      return;
+    }
+
+    let totalGastos = gasolina + carro + mantenimiento + otros;
+    let neto = tarifa - totalGastos;
+
+    document.getElementById("resultado").innerHTML = `
+      <p>💰 Ganancia total: $${tarifa.toFixed(2)}</p>
+      <p>🚕 Carreras: 1</p>
+      <p>⛽ Gasolina: $${gasolina.toFixed(2)}</p>
+      <p>🚗 Carro: $${carro.toFixed(2)}</p>
+      <p>🔧 Mantenimiento: $${mantenimiento.toFixed(2)}</p>
+      <p>🧾 Otros: $${otros.toFixed(2)}</p>
+      <p>✅ Ganancia neta: $${neto.toFixed(2)} en ${tiempo} h</p>
+    `;
+
+    ultimoResultado = { 
+      tarifa, gasolina, carro, mantenimiento, otros, tiempo, 
+      neto, fecha: new Date().toISOString() 
+    };
+  }
+
+  function guardarCarrera() {
+    if (!ultimoResultado) {
+      alert("Primero calcula una carrera antes de guardarla");
+      return;
+    }
+    let historial = JSON.parse(localStorage.getItem("historial")) || [];
+    historial.push(ultimoResultado);
+    localStorage.setItem("historial", JSON.stringify(historial));
+    alert("✅ Carrera guardada en el historial");
+  }
+
+  function verHistorial() {
+    mostrarPantalla("historial");
+    let historial = JSON.parse(localStorage.getItem("historial")) || [];
+    let lista = document.getElementById("listaHistorial");
+    lista.innerHTML = "";
+
+    let totalTarifa = historial.reduce((sum, c) => sum + c.tarifa, 0);
+    let totalGasolina = historial.reduce((sum, c) => sum + c.gasolina, 0);
+    let totalCarro = historial.reduce((sum, c) => sum + c.carro, 0);
+    let totalMantenimiento = historial.reduce((sum, c) => sum + c.mantenimiento, 0);
+    let totalOtros = historial.reduce((sum, c) => sum + c.otros, 0);
+    let totalNeto = historial.reduce((sum, c) => sum + c.neto, 0);
+
+    historial.forEach(c => {
+      let fecha = new Date(c.fecha).toLocaleString();
+      let item = document.createElement("li");
+      item.textContent = `${fecha} - Neto: $${c.neto.toFixed(2)} (${c.tiempo}h)`;
+      lista.appendChild(item);
+    });
+
+    document.getElementById("conteoHoy").innerText = `🗒️ Total de carreras: ${historial.length}`;
+    document.getElementById("totales").innerHTML = `
+      <p>💰 Ganancia total: $${totalTarifa.toFixed(2)}</p>
+      <p>🚕 Carreras: ${historial.length}</p>
+      <p>⛽ Gasolina total: $${totalGasolina.toFixed(2)}</p>
+      <p>🚗 Carro total: $${totalCarro.toFixed(2)}</p>
+      <p>🔧 Mantenimiento total: $${totalMantenimiento.toFixed(2)}</p>
+      <p>🧾 Otros gastos totales: $${totalOtros.toFixed(2)}</p>
+      <p>✅ Ganancia neta total: $${totalNeto.toFixed(2)}</p>
+    `;
+
+    listaCarreras = historial;
+
+    // Mostrar botones premium solo si está activo
+    let esPremium = localStorage.getItem("premiumActivo") === "true";
+    document.getElementById("btnReset").style.display = esPremium ? "block" : "none";
+    document.getElementById("btnPDF").style.display = esPremium ? "block" : "none";
+  }
+
+  function resetearHistorial() {
+    if (confirm("⚠️ ¿Seguro que deseas borrar todo el historial?")) {
+      localStorage.removeItem("historial");
+      verHistorial();
+    }
+  }
+
+  function descargarPDF() {
+    let doc = new jsPDF();
+    let fechaInforme = new Date().toLocaleString();
+
+    // Encabezado
+    doc.setFontSize(18);
+    doc.text("Informe de Conductor", 105, 20, { align: "center" });
+    doc.setFontSize(12);
+    doc.text("Fecha del informe: " + fechaInforme, 105, 30, { align: "center" });
+
+    // Tabla resumen
+    doc.autoTable({
+      startY: 40,
+      head: [["Ganancia Total", "Gasolina", "Carro", "Mantenimiento", "Otros", "Ganancia Neta"]],
+      body: [[
+        listaCarreras.reduce((s, c) => s + c.tarifa, 0).toFixed(2),
+        listaCarreras.reduce((s, c) => s + c.gasolina, 0).toFixed(2),
+        listaCarreras.reduce((s, c) => s + c.carro, 0).toFixed(2),
+        listaCarreras.reduce((s, c) => s + c.mantenimiento, 0).toFixed(2),
+        listaCarreras.reduce((s, c) => s + c.otros, 0).toFixed(2),
+        listaCarreras.reduce((s, c) => s + c.neto, 0).toFixed(2)
+      ]],
+      styles: { halign: "center" },
+      headStyles: { fillColor: [41, 128, 185] }
+    });
+
+    // Tabla detalle
+    let detalle = listaCarreras.map((c, i) => [
+      i + 1,
+      new Date(c.fecha).toLocaleString(),
+      c.tarifa.toFixed(2),
+      c.gasolina.toFixed(2),
+      c.carro.toFixed(2),
+      c.mantenimiento.toFixed(2),
+      c.otros.toFixed(2),
+      c.neto.toFixed(2),
+      c.tiempo + "h"
+    ]);
+
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [["#", "Fecha", "Tarifa", "Gasolina", "Carro", "Mant.", "Otros", "Neto", "Horas"]],
+      body: detalle,
+      styles: { fontSize: 10, halign: "center" },
+      headStyles: { fillColor: [52, 73, 94] }
+    });
+
+    // Gráfico
+    let ctx = document.getElementById("graficoPDF").getContext("2d");
+    let totalGasolina = listaCarreras.reduce((s, c) => s + c.gasolina, 0);
+    let totalCarro = listaCarreras.reduce((s, c) => s + c.carro, 0);
+    let totalMantenimiento = listaCarreras.reduce((s, c) => s + c.mantenimiento, 0);
+    let totalOtros = listaCarreras.reduce((s, c) => s + c.otros, 0);
+    let totalNeto = listaCarreras.reduce((s, c) => s + c.neto, 0);
+
+    let chart = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: ["Gasolina", "Carro", "Mantenimiento", "Otros", "Ganancia Neta"],
+        datasets: [{
+          data: [totalGasolina, totalCarro, totalMantenimiento, totalOtros, totalNeto],
+          backgroundColor: ["#e74c3c", "#8e44ad", "#f1c40f", "#3498db", "#2ecc71"]
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: { legend: { position: "bottom" } }
+      }
+    });
+
+    setTimeout(() => {
+      let imgData = document.getElementById("graficoPDF").toDataURL("image/png");
+      doc.addImage(imgData, "PNG", 40, doc.lastAutoTable.finalY + 20, 130, 90);
+      doc.save("Informe_Conductor.pdf");
+      chart.destroy();
+    }, 1000);
+  }
+
+  window.onload = () => {
+    if (localStorage.getItem("premiumActivo") === "true") {
+      mostrarPantalla("main");
+    } else {
+      mostrarPantalla("inicio");
+    }
+  };
+</script>
+</body>
+</html>
