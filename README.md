@@ -1,7 +1,5 @@
 # 🚖 SIGRA - Sistema de Gestión para Conductores
 
-![Banner](https://via.placeholder.com/800x200.png?text=SIGRA+%F0%9F%9A%96)  
-
 **SIGRA** (Sistema Integral de Gestión de Recursos para Automóviles) es una **herramienta web ligera** diseñada para conductores particulares y taxistas, que permite:
 
 - Registrar carreras diarias.
