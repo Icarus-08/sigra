@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Conductor 🚖</title>
   <style>
     body {
@@ -12,7 +13,8 @@
     }
     .container {
       max-width: 500px;
-      margin: 40px auto;
+      width: 90%; /* Responsivo en móviles */
+      margin: 20px auto;
       background: #fff;
       padding: 20px;
       border-radius: 10px;
@@ -22,23 +24,18 @@
       text-align: center;
       margin-bottom: 20px;
     }
-    input {
+    input, button {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
-      border: 1px solid #ccc;
       border-radius: 6px;
+      font-size: 16px;
     }
     button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
       background: #007bff;
       color: white;
       border: none;
-      border-radius: 6px;
       cursor: pointer;
-      font-size: 16px;
     }
     button.secondary {
       background: #6c757d;
@@ -53,11 +50,13 @@
       background: #f9f9f9;
       border-radius: 4px;
     }
+    canvas {
+      max-width: 100% !important;
+      height: auto !important;
+      display: none; /* solo se usa para exportar PDF */
+    }
     #resultado p, #totales p {
       margin: 5px 0;
-    }
-    canvas {
-      display: none; /* ocultamos el gráfico en la página, solo se usará para exportar al PDF */
     }
   </style>
   <!-- Librerías -->
@@ -127,13 +126,8 @@
     document.getElementById(id).style.display = "block";
   }
 
-  function volverInicio() {
-    mostrarPantalla("inicio");
-  }
-
-  function seleccionarVersion(premium) {
-    mostrarPantalla(premium ? "premium" : "main");
-  }
+  function volverInicio() { mostrarPantalla("inicio"); }
+  function seleccionarVersion(premium) { mostrarPantalla(premium ? "premium" : "main"); }
 
   function validarCodigo() {
     let codigo = document.getElementById("codigoPremium").value;
@@ -141,14 +135,10 @@
       localStorage.setItem("premiumActivo", "true");
       alert("✅ Acceso Premium habilitado");
       mostrarPantalla("main");
-    } else {
-      alert("❌ Código incorrecto");
-    }
+    } else { alert("❌ Código incorrecto"); }
   }
 
-  function volverAtras() {
-    mostrarPantalla("main");
-  }
+  function volverAtras() { mostrarPantalla("main"); }
 
   function calcular() {
     let tarifa = parseFloat(document.getElementById("tarifa").value) || 0;
@@ -158,10 +148,7 @@
     let otros = parseFloat(document.getElementById("otros").value) || 0;
     let tiempo = parseFloat(document.getElementById("tiempo").value) || 0;
 
-    if (tarifa === 0 || tiempo === 0) {
-      alert("Por favor ingresa al menos la ganancia y el tiempo en horas");
-      return;
-    }
+    if (tarifa === 0 || tiempo === 0) { alert("Por favor ingresa al menos la ganancia y el tiempo en horas"); return; }
 
     let totalGastos = gasolina + carro + mantenimiento + otros;
     let neto = tarifa - totalGastos;
@@ -176,17 +163,11 @@
       <p>✅ Ganancia neta: $${neto.toFixed(2)} en ${tiempo} h</p>
     `;
 
-    ultimoResultado = { 
-      tarifa, gasolina, carro, mantenimiento, otros, tiempo, 
-      neto, fecha: new Date().toISOString() 
-    };
+    ultimoResultado = { tarifa, gasolina, carro, mantenimiento, otros, tiempo, neto, fecha: new Date().toISOString() };
   }
 
   function guardarCarrera() {
-    if (!ultimoResultado) {
-      alert("Primero calcula una carrera antes de guardarla");
-      return;
-    }
+    if (!ultimoResultado) { alert("Primero calcula una carrera antes de guardarla"); return; }
     let historial = JSON.parse(localStorage.getItem("historial")) || [];
     historial.push(ultimoResultado);
     localStorage.setItem("historial", JSON.stringify(historial));
@@ -199,12 +180,12 @@
     let lista = document.getElementById("listaHistorial");
     lista.innerHTML = "";
 
-    let totalTarifa = historial.reduce((sum, c) => sum + c.tarifa, 0);
-    let totalGasolina = historial.reduce((sum, c) => sum + c.gasolina, 0);
-    let totalCarro = historial.reduce((sum, c) => sum + c.carro, 0);
-    let totalMantenimiento = historial.reduce((sum, c) => sum + c.mantenimiento, 0);
-    let totalOtros = historial.reduce((sum, c) => sum + c.otros, 0);
-    let totalNeto = historial.reduce((sum, c) => sum + c.neto, 0);
+    let totalTarifa = historial.reduce((s, c) => s + c.tarifa, 0);
+    let totalGasolina = historial.reduce((s, c) => s + c.gasolina, 0);
+    let totalCarro = historial.reduce((s, c) => s + c.carro, 0);
+    let totalMantenimiento = historial.reduce((s, c) => s + c.mantenimiento, 0);
+    let totalOtros = historial.reduce((s, c) => s + c.otros, 0);
+    let totalNeto = historial.reduce((s, c) => s + c.neto, 0);
 
     historial.forEach(c => {
       let fecha = new Date(c.fecha).toLocaleString();
@@ -225,8 +206,6 @@
     `;
 
     listaCarreras = historial;
-
-    // Mostrar botones premium solo si está activo
     let esPremium = localStorage.getItem("premiumActivo") === "true";
     document.getElementById("btnReset").style.display = esPremium ? "block" : "none";
     document.getElementById("btnPDF").style.display = esPremium ? "block" : "none";
@@ -243,13 +222,11 @@
     let doc = new jsPDF();
     let fechaInforme = new Date().toLocaleString();
 
-    // Encabezado
     doc.setFontSize(18);
     doc.text("Informe de Conductor", 105, 20, { align: "center" });
     doc.setFontSize(12);
     doc.text("Fecha del informe: " + fechaInforme, 105, 30, { align: "center" });
 
-    // Tabla resumen
     doc.autoTable({
       startY: 40,
       head: [["Ganancia Total", "Gasolina", "Carro", "Mantenimiento", "Otros", "Ganancia Neta"]],
@@ -265,7 +242,6 @@
       headStyles: { fillColor: [41, 128, 185] }
     });
 
-    // Tabla detalle
     let detalle = listaCarreras.map((c, i) => [
       i + 1,
       new Date(c.fecha).toLocaleString(),
@@ -286,7 +262,6 @@
       headStyles: { fillColor: [52, 73, 94] }
     });
 
-    // Gráfico
     let ctx = document.getElementById("graficoPDF").getContext("2d");
     let totalGasolina = listaCarreras.reduce((s, c) => s + c.gasolina, 0);
     let totalCarro = listaCarreras.reduce((s, c) => s + c.carro, 0);
@@ -303,10 +278,7 @@
           backgroundColor: ["#e74c3c", "#8e44ad", "#f1c40f", "#3498db", "#2ecc71"]
         }]
       },
-      options: {
-        responsive: false,
-        plugins: { legend: { position: "bottom" } }
-      }
+      options: { responsive: false, plugins: { legend: { position: "bottom" } } }
     });
 
     setTimeout(() => {
