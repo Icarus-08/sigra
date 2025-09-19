@@ -7,7 +7,6 @@
   <style>
     :root{--primary:#007bff;--bg:#f4f4f9;--card-bg:#fff}
     body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:black;color:#333}
-    /* Splash */
     .splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:black;color:var(--primary);font-size:3rem;letter-spacing:.5rem;z-index:30;opacity:1}
     .sigra span{opacity:0;animation:fadeInLetter 1.5s forwards}
     .sigra span:nth-child(1){animation-delay:1.3s}
@@ -15,34 +14,19 @@
     .sigra span:nth-child(3){animation-delay:1.9s}
     .sigra span:nth-child(4){animation-delay:2.2s}
     .sigra span:nth-child(5){animation-delay:2.5s}
-    @keyframes fadeInLetter{
-      from{opacity:0;filter:blur(4px);transform:translateY(20px);}
-      to{opacity:1;filter:blur(0);transform:translateY(0);}
-    }
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; visibility: hidden; }
-    }
-    .splash.fade-out { animation: fadeOut 1.5s ease forwards; }
-    /* Containers */
+    @keyframes fadeInLetter{from{opacity:0;filter:blur(4px);transform:translateY(20px);}to{opacity:1;filter:blur(0);transform:translateY(0);}}
+    @keyframes fadeOut{from{opacity:1;}to{opacity:0;visibility:hidden;}}
+    .splash.fade-out{animation:fadeOut 1.5s ease forwards;}
     .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
     .card{width:100%;max-width:920px;background:var(--card-bg);padding:1.25rem;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
     .hidden{display:none}
     h1,h2,h3{margin:.25rem 0}
     .row{display:flex;gap:12px}
-    .col{flex:1}
     input,select,button,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:15px}
     button{background:var(--primary);color:#fff;border:none;cursor:pointer}
     button.secondary{background:#6c757d}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
     .small{font-size:.9rem;color:#555}
     .muted{color:#666}
-    .grid{display:grid;grid-template-columns:1fr 340px;gap:12px}
-    .list{max-height:260px;overflow:auto;padding:8px;background:#fafafa;border-radius:8px}
-    .actions{display:flex;gap:8px}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
-    footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
-    @media(max-width:900px){.grid{grid-template-columns:1fr}}
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .2s;z-index:50}
     .modal.show{visibility:visible;opacity:1}
     .modal .content{background:var(--card-bg);padding:1rem;border-radius:10px;max-width:720px;max-height:80vh;overflow:auto}
@@ -99,7 +83,7 @@
         Usuarios registrados: <span id="userCount">0</span>
       </div>
 
-      <!-- 🔴 Botón de reset solo visible para admin -->
+      <!-- Botón de reset solo visible para admin -->
       <div id="resetContainer" style="margin-top:8px;text-align:center;display:none">
         <button class="secondary" style="background:#c0392b" onclick="resetAllData()">Borrar todo</button>
       </div>
@@ -146,13 +130,7 @@
     function ensureAdminExists(){
       let users = readJSON(USERS_KEY);
       if(!users.find(u=>u.email===SPECIAL_EMAIL)){
-        users.push({
-          name:"Admin",
-          last:"SIGRA",
-          email:SPECIAL_EMAIL,
-          password:hashPass("2004"), // contraseña fija del admin
-          created:new Date().toISOString()
-        });
+        users.push({name:"Admin",last:"SIGRA",email:SPECIAL_EMAIL,password:hashPass("2004"),created:new Date().toISOString()});
         writeJSON(USERS_KEY,users);
       }
     }
@@ -171,50 +149,40 @@
       const pass=document.getElementById('regPass').value;
       const pass2=document.getElementById('regPass2').value;
       const accepted=document.getElementById('acceptTerms').checked;
-
       if(!name||!last||!email||!pass){alert('Completa todos los campos');return}
-      if(pass.length < 4){document.getElementById('passError').innerText='La contraseña debe tener mínimo 4 caracteres';document.getElementById('passError').style.display='block';return}
+      if(pass.length<4){document.getElementById('passError').innerText='La contraseña debe tener mínimo 4 caracteres';document.getElementById('passError').style.display='block';return}
       if(pass!==pass2){document.getElementById('passError').innerText='Las contraseñas no coinciden';document.getElementById('passError').style.display='block';return}
       if(!accepted){alert('Debes aceptar los términos');return}
-
       const users=readJSON(USERS_KEY);
       if(users.find(u=>u.email===email)){document.getElementById('emailError').innerText='Ya existe una cuenta con ese correo';document.getElementById('emailError').style.display='block';return}
       users.push({name,last,email,password:hashPass(pass),created:new Date().toISOString()});
       writeJSON(USERS_KEY,users);
-
       document.getElementById('regName').value='';
       document.getElementById('regLast').value='';
       document.getElementById('regEmail').value='';
       document.getElementById('regPass').value='';
       document.getElementById('regPass2').value='';
       document.getElementById('acceptTerms').checked=false;
-
       updateUserCount();
       document.getElementById('successModal').classList.add('show');
     }
 
-    function closeSuccessModal(){
-      document.getElementById('successModal').classList.remove('show');
-      showLogin();
-    }
+    function closeSuccessModal(){document.getElementById('successModal').classList.remove('show');showLogin();}
 
     function resetAllData(){
       const code = prompt("Introduce el código para borrar todo:");
-      if(code !== "Icarus_08"){
-        alert("❌ Código incorrecto. Operación cancelada.");
-        return;
-      }
+      if(code!=="Icarus_08"){alert("❌ Código incorrecto. Operación cancelada.");return;}
       if(confirm("⚠️ Esto borrará TODAS las cuentas y sesiones. ¿Seguro que deseas continuar?")){
         localStorage.removeItem(USERS_KEY);
         localStorage.removeItem(SESSIONS_KEY);
         localStorage.removeItem(MASTER_FUEL_KEY);
         localStorage.removeItem('sigra_current');
         updateUserCount();
-        alert("✅ Todos los datos fueron borrados. Puedes volver a registrar desde cero.");
+        alert("✅ Todos los datos fueron borrados. Solo queda el admin.");
         showLogin();
         document.getElementById('authWrap').style.display='flex';
         document.getElementById('appWrap').style.display='none';
-        ensureAdminExists(); // vuelve a crear al admin
+        ensureAdminExists();
       }
     }
 
@@ -222,33 +190,32 @@
       const email=sanitizeEmailKey(document.getElementById('loginEmail').value);
       const pass=document.getElementById('loginPass').value;
       const users=readJSON(USERS_KEY);
-      const user=users.find(u=>u.email===email && u.password===hashPass(pass));
+      const user=users.find(u=>u.email===email&&u.password===hashPass(pass));
       if(!user){alert("Correo o contraseña incorrectos");return;}
       localStorage.setItem('sigra_current',email);
-      if(email===SPECIAL_EMAIL){
-        document.getElementById('resetContainer').style.display='block'; // admin ve el botón reset
-      } else {
-        document.getElementById('resetContainer').style.display='none';
-      }
+      document.getElementById('resetContainer').style.display=(email===SPECIAL_EMAIL)?'block':'none';
       alert("Bienvenido "+user.name);
     }
 
     function init(){
+      // 🔴 BORRADO FORZADO al cargar
+      localStorage.removeItem(USERS_KEY);
+      localStorage.removeItem(SESSIONS_KEY);
+      localStorage.removeItem(MASTER_FUEL_KEY);
+      localStorage.removeItem('sigra_current');
       ensureAdminExists();
       updateUserCount();
+
       setTimeout(()=>{
-        const splash = document.getElementById('splash');
+        const splash=document.getElementById('splash');
         splash.classList.add('fade-out');
         setTimeout(()=>{
           splash.style.display='none';
-          document.body.style.background = "var(--bg)";
+          document.body.style.background="var(--bg)";
           const current=localStorage.getItem('sigra_current');
-          if(!current){
-            document.getElementById('authWrap').style.display='flex';
-          } else {
-            if(current===SPECIAL_EMAIL){
-              document.getElementById('resetContainer').style.display='block';
-            }
+          if(!current){document.getElementById('authWrap').style.display='flex';}
+          else{
+            if(current===SPECIAL_EMAIL){document.getElementById('resetContainer').style.display='block';}
             document.getElementById('appWrap').style.display='block';
           }
         },1500);
@@ -258,5 +225,3 @@
   </script>
 </body>
 </html>
-
-
