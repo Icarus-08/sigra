@@ -19,10 +19,7 @@
       from{opacity:0;filter:blur(4px);transform:translateY(20px);}
       to{opacity:1;filter:blur(0);transform:translateY(0);}
     }
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; visibility: hidden; }
-    }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
     .splash.fade-out { animation: fadeOut 1.5s ease forwards; }
     /* Containers */
     .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
@@ -30,23 +27,14 @@
     .hidden{display:none}
     h1,h2,h3{margin:.25rem 0}
     .row{display:flex;gap:12px}
-    .col{flex:1}
     input,select,button,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:15px}
     button{background:var(--primary);color:#fff;border:none;cursor:pointer}
     button.secondary{background:#6c757d}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
     .small{font-size:.9rem;color:#555}
     .muted{color:#666}
-    .grid{display:grid;grid-template-columns:1fr 340px;gap:12px}
-    .list{max-height:260px;overflow:auto;padding:8px;background:#fafafa;border-radius:8px}
-    .actions{display:flex;gap:8px}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
-    footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
-    @media(max-width:900px){.grid{grid-template-columns:1fr}}
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .2s;z-index:50}
     .modal.show{visibility:visible;opacity:1}
     .modal .content{background:var(--card-bg);padding:1rem;border-radius:10px;max-width:720px;max-height:80vh;overflow:auto}
-    .auth-wrap{width:420px;max-width:95vw}
     .error{color:#c0392b;font-size:.85rem;margin-top:-6px;margin-bottom:6px}
   </style>
 </head>
@@ -128,7 +116,7 @@
 
   <!-- GESTOR PRINCIPAL -->
   <div style="display:none;padding:18px" id="appWrap">
-    <!-- Aquí iría todo el gestor -->
+    <!-- Contenido de prueba para la gestión SIGRA -->
   </div>
 
   <script>
@@ -194,7 +182,7 @@
     }
 
     function closeSuccessModal(){
-      document.getElementById('successModal').classList.remove('show');
+      document.getElementById('successModal').classList.remove('show
       showLogin();
     }
 
@@ -219,22 +207,42 @@
     }
 
     function doLogin(){
-      const email=sanitizeEmailKey(document.getElementById('loginEmail').value);
-      const pass=document.getElementById('loginPass').value;
-      const users=readJSON(USERS_KEY);
-      const user=users.find(u=>u.email===email && u.password===hashPass(pass));
-      if(!user){alert("Correo o contraseña incorrectos");return;}
+      const email = sanitizeEmailKey(document.getElementById('loginEmail').value);
+      const pass = document.getElementById('loginPass').value;
+      const users = readJSON(USERS_KEY);
+      const user = users.find(u => u.email === email && u.password === hashPass(pass));
+      if(!user){
+        alert("Correo o contraseña incorrectos");
+        return;
+      }
       
-      localStorage.setItem('sigra_current',email);
+      localStorage.setItem('sigra_current', email);
 
-      // Mostrar gestor principal y ocultar login
-      document.getElementById('authWrap').style.display='none';
-      document.getElementById('appWrap').style.display='block';
+      // Ocultar login y mostrar gestión SIGRA
+      document.getElementById('authWrap').style.display = 'none';
+      document.getElementById('appWrap').style.display = 'block';
 
-      // Mostrar reset solo para admin
-      document.getElementById('resetContainer').style.display = (email === SPECIAL_EMAIL) ? 'block' : 'none';
+      // Mostrar botón reset solo para admin
+      if(email === SPECIAL_EMAIL){
+        document.getElementById('resetContainer').style.display = 'block';
+      } else {
+        document.getElementById('resetContainer').style.display = 'none';
+      }
 
-      alert("Bienvenido "+user.name);
+      alert("Bienvenido " + user.name);
+
+      // Aquí puedes colocar contenido inicial del gestor
+      const appWrap = document.getElementById('appWrap');
+      appWrap.innerHTML = `
+        <h1 style="color:var(--primary)">Gestión SIGRA</h1>
+        <p>Bienvenido, ${user.name} ${user.last}. Aquí verás todas las herramientas de gestión de conductores.</p>
+        <ul>
+          <li>Precios de gasolina</li>
+          <li>Registro de carreras</li>
+          <li>Ganancias diarias</li>
+          <li>Estimación de tiempo de rutas</li>
+        </ul>
+      `;
     }
 
     function init(){
@@ -246,18 +254,38 @@
         setTimeout(()=>{
           splash.style.display='none';
           document.body.style.background = "var(--bg)";
-          const current=localStorage.getItem('sigra_current');
+          const current = localStorage.getItem('sigra_current');
           if(!current){
             document.getElementById('authWrap').style.display='flex';
           } else {
+            if(current === SPECIAL_EMAIL){
+              document.getElementById('resetContainer').style.display='block';
+            }
             document.getElementById('authWrap').style.display='none';
             document.getElementById('appWrap').style.display='block';
-            document.getElementById('resetContainer').style.display = (current === SPECIAL_EMAIL) ? 'block' : 'none';
+
+            // Cargar contenido inicial del gestor automáticamente
+            const users = readJSON(USERS_KEY);
+            const user = users.find(u => u.email === current);
+            if(user){
+              const appWrap = document.getElementById('appWrap');
+              appWrap.innerHTML = `
+                <h1 style="color:var(--primary)">Gestión SIGRA</h1>
+                <p>Bienvenido, ${user.name} ${user.last}. Aquí verás todas las herramientas de gestión de conductores.</p>
+                <ul>
+                  <li>Precios de gasolina</li>
+                  <li>Registro de carreras</li>
+                  <li>Ganancias diarias</li>
+                  <li>Estimación de tiempo de rutas</li>
+                </ul>
+              `;
+            }
           }
         },1500);
       },3000);
     }
-    window.addEventListener('load',init);
+
+    window.addEventListener('load', init);
   </script>
 </body>
 </html>
