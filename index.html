@@ -1,22 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SIGRA - Gestor de Conductor 🚖</title>
   <style>
     :root{--primary:#007bff;--bg:#f4f4f9;--card-bg:#fff}
     body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:black;color:#333}
     /* Splash */
-    .splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:black;color:var(--primary);font-size:3rem;letter-spacing:.5rem;z-index:30}
-    .sigra span{opacity:0;animation:fadeInLetter 1s forwards}
-    .sigra span:nth-child(1){animation-delay:.5s}
-    .sigra span:nth-child(2){animation-delay:1s}
-    .sigra span:nth-child(3){animation-delay:1.5s}
-    .sigra span:nth-child(4){animation-delay:2s}
-    .sigra span:nth-child(5){animation-delay:2.5s}
-    @keyframes fadeInLetter{from{opacity:0;filter:blur(4px)}to{opacity:1;filter:blur(0)}}
-    @keyframes fadeOut{to{opacity:0;visibility:hidden}}
+    .splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:black;color:var(--primary);font-size:3rem;letter-spacing:.5rem;z-index:30;opacity:1}
+    .sigra span{opacity:0;animation:fadeInLetter 0.5s forwards}
+    .sigra span:nth-child(1){animation-delay:0.3s}
+    .sigra span:nth-child(2){animation-delay:0.6s}
+    .sigra span:nth-child(3){animation-delay:0.9s}
+    .sigra span:nth-child(4){animation-delay:1.2s}
+    .sigra span:nth-child(5){animation-delay:1.5s}
+    @keyframes fadeInLetter{
+      from{opacity:0;filter:blur(4px);transform:translateY(20px);}
+      to{opacity:1;filter:blur(0);transform:translateY(0);}
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; visibility: hidden; }
+    }
+    .splash.fade-out {
+      animation: fadeOut 1.5s ease forwards;
+    }
     /* Containers */
     .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
     .card{width:100%;max-width:920px;background:var(--card-bg);padding:1.25rem;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
@@ -32,20 +41,17 @@
     .muted{color:#666}
     .grid{display:grid;grid-template-columns:1fr 340px;gap:12px}
     .list{max-height:260px;overflow:auto;padding:8px;background:#fafafa;border-radius:8px}
-    table{width:100%;border-collapse:collapse}
-    table td,table th{padding:6px;border-bottom:1px solid #eee}
     .actions{display:flex;gap:8px}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
     footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
-    /* Responsive */
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
-    /* Modal */
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .2s;z-index:50}
     .modal.show{visibility:visible;opacity:1}
     .modal .content{background:var(--card-bg);padding:1rem;border-radius:10px;max-width:720px;max-height:80vh;overflow:auto}
-    /* Small helpers */
-    .right{text-align:right}
+    .auth-wrap{width:420px;max-width:95vw}
+    .error{color:#c0392b;font-size:.85rem;margin-top:-6px;margin-bottom:6px}
   </style>
+
   <!-- Librerías (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -54,13 +60,17 @@
 <body>
   <!-- SPLASH -->
   <div class="splash" id="splash">
-    <div class="sigra"> <span>S</span>.<span>I</span>.<span>G</span>.<span>R</span>.<span>A</span> </div>
+    <div class="sigra"> 
+      <span>S</span>.<span>I</span>.<span>G</span>.<span>R</span>.<span>A</span> 
+    </div>
   </div>
 
-  <!-- LOGIN / REGISTER -->
-  <div class="center-wrap" id="authWrap">
-    <div class="card" id="loginCard">
-      <h1 style="color:var(--primary)">SIGRA</h1>
+  <!-- AUTH -->
+  <div class="center-wrap" id="authWrap" style="display:none">
+    <div class="card auth-wrap" id="loginCard">
+      <h1 style="color:var(--primary);margin-bottom:8px">SIGRA</h1>
+
+      <!-- LOGIN VIEW -->
       <div id="loginView">
         <input id="loginEmail" type="email" placeholder="Correo" />
         <input id="loginPass" type="password" placeholder="Contraseña" />
@@ -71,6 +81,7 @@
         <p class="small muted">Al continuar aceptas nuestros <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></p>
       </div>
 
+      <!-- REGISTER VIEW -->
       <div id="registerView" class="hidden">
         <h2>Crear Cuenta</h2>
         <div class="row">
@@ -78,7 +89,9 @@
           <input id="regLast" placeholder="Apellido" />
         </div>
         <input id="regEmail" type="email" placeholder="Correo" />
+        <div id="emailError" class="error" style="display:none"></div>
         <input id="regPass" type="password" placeholder="Contraseña" />
+        <div id="passError" class="error" style="display:none"></div>
         <input id="regPass2" type="password" placeholder="Confirmar Contraseña" />
         <div style="margin:8px 0" class="terms-checkbox">
           <input id="acceptTerms" type="checkbox" /> <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
@@ -97,125 +110,46 @@
   <div class="modal" id="termsModal">
     <div class="content">
       <h2 style="color:var(--primary);text-align:center">Términos y Condiciones</h2>
-      <p><b>Confidencialidad de la Información</b><br>Todos los datos suministrados por los usuarios se almacenan localmente en el navegador (localStorage). No se envía información a servidores. Usa contraseñas seguras. Esta aplicación es para uso local/educativo.</p>
+      <p><b>Confidencialidad de la Información</b><br>Todos los datos se almacenan localmente en el navegador. No se envía información a servidores. Usa contraseñas seguras. Esta aplicación es para uso local/educativo.</p>
       <div style="text-align:center;margin-top:12px"><button onclick="acceptTerms()">Aceptar</button> <button class="secondary" onclick="rejectTerms()">Rechazar</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ÉXITO -->
+  <div class="modal" id="successModal">
+    <div class="content" style="text-align:center">
+      <h2 style="color:var(--primary)">✅ Cuenta creada</h2>
+      <p>Tu cuenta ha sido registrada correctamente.</p>
+      <div style="margin-top:12px">
+        <button onclick="closeSuccessModal()">Aceptar</button>
+      </div>
     </div>
   </div>
 
   <!-- GESTOR PRINCIPAL -->
   <div style="display:none;padding:18px" id="appWrap">
-    <div class="card">
-      <div class="topbar">
-        <div>
-          <h2 style="margin:0">Gestor de Conductor 🚖</h2>
-          <div class="small">Usuario: <span id="currentUserLabel" class="pill">-</span></div>
-        </div>
-        <div class="actions">
-          <button onclick="openSessions()" class="secondary">Ver sesiones</button>
-          <button id="btnLogout" class="secondary" onclick="doLogout()">Cerrar Sesión</button>
-        </div>
-      </div>
-
-      <div class="grid">
-        <div>
-          <!-- CALCULO CARRERA -->
-          <div style="margin-bottom:12px">
-            <h3>Calcular Ganancia</h3>
-            <div class="row">
-              <input id="tarifa" placeholder="Tarifa (ganancia) $" />
-              <input id="tiempo" placeholder="Tiempo (h)" />
-            </div>
-            <div class="row">
-              <input id="gasolina" placeholder="Gasolina $ (usar último si vacío)" />
-              <input id="carro" placeholder="Gastos carro $" />
-            </div>
-            <div class="row">
-              <input id="mantenimiento" placeholder="Mantenimiento $" />
-              <input id="otros" placeholder="Otros gastos $" />
-            </div>
-            <div class="row">
-              <button onclick="calcular()">Calcular</button>
-              <button class="secondary" onclick="guardarCarrera()">Guardar Carrera</button>
-            </div>
-            <div id="resultado" class="list" style="margin-top:8px"></div>
-          </div>
-
-          <!-- HISTORIAL CARRERAS -->
-          <div style="margin-bottom:12px">
-            <h3>Historial de Carreras</h3>
-            <div id="historialList" class="list"></div>
-            <div style="margin-top:8px" class="row">
-              <button onclick="loadHistorial()">Refrescar</button>
-              <button class="secondary" id="btnPDF" onclick="exportPDF()">Exportar PDF</button>
-            </div>
-          </div>
-
-          <!-- PRECIOS COMBUSTIBLE -->
-          <div>
-            <h3>Precios de Combustible (por usuario)</h3>
-            <div class="row">
-              <input id="price95" placeholder="Gasolina 95 $" />
-              <input id="price90" placeholder="Gasolina 90 $" />
-            </div>
-            <div class="row">
-              <input id="pricediesel" placeholder="Diésel $" />
-              <input id="btnSaveFuel" type="button" value="Guardar precio del día" onclick="saveFuelPrice()" />
-            </div>
-            <div style="margin-top:8px" class="small muted">Último precio guardado: <span id="lastFuel" class="pill">-</span></div>
-
-            <h4 style="margin-top:8px">Historial de precios</h4>
-            <div id="fuelList" class="list"></div>
-          </div>
-        </div>
-
-        <div>
-          <!-- TOTALES Y GRAFICO -->
-          <div style="margin-bottom:12px">
-            <h3>Totales acumulados</h3>
-            <div id="totales" class="list"></div>
-          </div>
-
-          <div>
-            <h3>Gráfico (gastos vs neto)</h3>
-            <canvas id="grafico" style="max-width:100%;height:240px;background:#fff;padding:8px;border-radius:8px"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <footer>SIGRA • LocalStorage • Desarrollo local</footer>
-    </div>
-  </div>
-
-  <!-- MODAL SESSIONS -->
-  <div class="modal" id="sessionsModal">
-    <div class="content">
-      <h3>Historial de sesiones</h3>
-      <div id="sessionsList" class="list"></div>
-      <div style="text-align:center;margin-top:8px"><button onclick="closeSessions()">Cerrar</button></div>
-    </div>
+    <!-- Aquí iría todo el gestor (carreras, totales, combustible con restricción, gráfico, PDF, etc.) -->
   </div>
 
   <script>
-    // --- Utils ---
     const USERS_KEY = 'sigra_users';
     const SESSIONS_KEY = 'sigra_sessions';
-    const sanitizeEmailKey = (email)=>email.trim().toLowerCase();
+    const MASTER_FUEL_KEY = 'sigra_fuel_master';
+    const SPECIAL_EMAIL = 'hiroemiya1412@gmail.com';
+    const PRECIOS_FIJOS = { g95: 1.25, g90: 1.10, diesel: 0.95 };
 
+    const sanitizeEmailKey = (email)=> (email||'').trim().toLowerCase();
     function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
     function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
-
-    // Simple 'hash' for passwords (base64) - not secure but avoids plain text
     function hashPass(p){return btoa(p)}
 
-    // --- Auth UI ---
     function showRegister(){document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.remove('hidden')}
     function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
-
     function openTerms(e){e&&e.preventDefault();document.getElementById('termsModal').classList.add('show')}
     function acceptTerms(){document.getElementById('acceptTerms').checked=true;document.getElementById('termsModal').classList.remove('show')}
     function rejectTerms(){document.getElementById('acceptTerms').checked=false;document.getElementById('termsModal').classList.remove('show')}
+    function updateUserCount(){document.getElementById('userCount').innerText=readJSON(USERS_KEY).length}
 
-    // --- Accounts ---
     function createAccount(){
       const name=document.getElementById('regName').value.trim();
       const last=document.getElementById('regLast').value.trim();
@@ -223,198 +157,52 @@
       const pass=document.getElementById('regPass').value;
       const pass2=document.getElementById('regPass2').value;
       const accepted=document.getElementById('acceptTerms').checked;
+
       if(!name||!last||!email||!pass){alert('Completa todos los campos');return}
-      if(pass!==pass2){alert('Las contraseñas no coinciden');return}
+      if(pass.length < 4){document.getElementById('passError').innerText='La contraseña debe tener mínimo 4 caracteres';document.getElementById('passError').style.display='block';return}
+      if(pass!==pass2){document.getElementById('passError').innerText='Las contraseñas no coinciden';document.getElementById('passError').style.display='block';return}
       if(!accepted){alert('Debes aceptar los términos');return}
+
       const users=readJSON(USERS_KEY);
-      if(users.find(u=>u.email===email)){alert('Ya existe una cuenta con ese correo');return}
+      if(users.find(u=>u.email===email)){document.getElementById('emailError').innerText='Ya existe una cuenta con ese correo';document.getElementById('emailError').style.display='block';return}
       users.push({name,last,email,password:hashPass(pass),created:new Date().toISOString()});
       writeJSON(USERS_KEY,users);
-      document.getElementById('regName').value='';document.getElementById('regLast').value='';document.getElementById('regEmail').value='';document.getElementById('regPass').value='';document.getElementById('regPass2').value='';document.getElementById('acceptTerms').checked=false;
-      alert('Cuenta creada. Ya puedes iniciar sesión.');
+
+      document.getElementById('regName').value='';
+      document.getElementById('regLast').value='';
+      document.getElementById('regEmail').value='';
+      document.getElementById('regPass').value='';
+      document.getElementById('regPass2').value='';
+      document.getElementById('acceptTerms').checked=false;
+
       updateUserCount();
+      document.getElementById('successModal').classList.add('show');
+    }
+
+    function closeSuccessModal(){
+      document.getElementById('successModal').classList.remove('show');
       showLogin();
     }
 
-    function updateUserCount(){document.getElementById('userCount').innerText=readJSON(USERS_KEY).length}
-
-    function doLogin(){
-      const email=sanitizeEmailKey(document.getElementById('loginEmail').value);
-      const pass=document.getElementById('loginPass').value;
-      const users=readJSON(USERS_KEY);
-      const u=users.find(x=>x.email===email);
-      if(!u||u.password!==hashPass(pass)){alert('Correo o contraseña incorrectos');return}
-      // set current session
-      localStorage.setItem('sigra_current',email);
-      recordSession(email);
-      showAppForUser(email);
-    }
-
-    function recordSession(email){
-      const sessions=readJSON(SESSIONS_KEY);
-      sessions.push({email,date:new Date().toISOString()});
-      writeJSON(SESSIONS_KEY,sessions);
-    }
-
-    function doLogout(){localStorage.removeItem('sigra_current');document.getElementById('appWrap').style.display='none';document.getElementById('authWrap').style.display='flex';document.getElementById('loginCard').classList.remove('hidden');document.getElementById('splash').style.display='none';}
-
-    // Show sessions modal
-    function openSessions(){const sessions=readJSON(SESSIONS_KEY).slice().reverse();const el=document.getElementById('sessionsList');el.innerHTML='';if(!sessions.length)el.innerHTML='<div class="small muted">No hay sesiones registradas</div>';
-      sessions.forEach(s=>{const d=new Date(s.date);const row=document.createElement('div');row.style.padding='6px 0';row.innerHTML=`<strong>${s.email}</strong> — <span class="small muted">${d.toLocaleString()}</span>`;el.appendChild(row)})
-      document.getElementById('sessionsModal').classList.add('show')}
-    function closeSessions(){document.getElementById('sessionsModal').classList.remove('show')}
-
-    // --- App / Gestor ---
-    function showAppForUser(email){
-      document.getElementById('authWrap').style.display='none';
-      document.getElementById('appWrap').style.display='block';
-      document.getElementById('currentUserLabel').innerText=email;
-      loadHistorial();
-      loadTotals();
-      loadFuelPrices();
-      renderChart();
-    }
-
-    // Historial de carreras por usuario
-    function getHistKey(email){return `historial_${email}`}
-    function getFuelKey(email){return `fuel_${email}`}
-
-    let ultimoResultado=null;
-    let listaCarreras=[];
-
-    function calcular(){
-      const email=localStorage.getItem('sigra_current');
-      if(!email){alert('No estás logueado');return}
-      const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-      let gasolina=parseFloat(document.getElementById('gasolina').value||0);
-      const carro=parseFloat(document.getElementById('carro').value)||0;
-      const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-      const otros=parseFloat(document.getElementById('otros').value)||0;
-      const tiempo=parseFloat(document.getElementById('tiempo').value)||0;
-      // si gasolina vacío, tomar último precio y suponer consumo 1 unidad (usuario puede ajustar)
-      if(!gasolina){
-        const fuels=readJSON(getFuelKey(email));
-        if(fuels.length){const last=fuels[fuels.length-1];gasolina=last.g95||last.g90||last.diesel||0}
-      }
-      if(tarifa===0||tiempo===0){alert('Por favor ingresa al menos la ganancia y el tiempo en horas');return}
-      const totalGastos = gasolina + carro + mantenimiento + otros;
-      const neto = tarifa - totalGastos;
-      const resultadoEl = document.getElementById('resultado');
-      resultadoEl.innerHTML = `\n        <p>📌 Tarifa: $${tarifa.toFixed(2)}</p>\n        <p>⛽ Gasolina: $${gasolina.toFixed(2)}</p>\n        <p>🚗 Carro: $${carro.toFixed(2)}</p>\n        <p>🔧 Mantenimiento: $${mantenimiento.toFixed(2)}</p>\n        <p>🧾 Otros: $${otros.toFixed(2)}</p>\n        <p>✅ Ganancia neta: $${neto.toFixed(2)} en ${tiempo} h</p>\n      `;
-      ultimoResultado={tarifa,gasolina,carro,mantenimiento,otros,tiempo,neto,fecha:new Date().toISOString()};
-    }
-
-    function guardarCarrera(){
-      const email=localStorage.getItem('sigra_current');
-      if(!email){alert('No estás logueado');return}
-      if(!ultimoResultado){alert('Primero calcula una carrera antes de guardarla');return}
-      const key=getHistKey(email);
-      const historial=readJSON(key);
-      historial.push(ultimoResultado);
-      writeJSON(key,historial);
-      ultimoResultado=null;document.getElementById('resultado').innerHTML='Guardado ✅';
-      loadHistorial();loadTotals();renderChart();
-    }
-
-    function loadHistorial(){
-      const email=localStorage.getItem('sigra_current');
-      if(!email) return;
-      const key=getHistKey(email);
-      const historial=readJSON(key);
-      listaCarreras=historial.slice();
-      const el=document.getElementById('historialList');el.innerHTML='';
-      if(!historial.length){el.innerHTML='<div class="small muted">No hay carreras guardadas</div>'}
-      historial.slice().reverse().forEach((c,i)=>{
-        const d=new Date(c.fecha);
-        const div=document.createElement('div');div.style.padding='6px 0';
-        div.innerHTML=`<strong>${d.toLocaleString()}</strong> — Tarifa: $${c.tarifa.toFixed(2)} • Neto: $${c.neto.toFixed(2)}`;
-        el.appendChild(div);
-      })
-      // mostrar/ocultar boton PDF si hay datos
-      document.getElementById('btnPDF').style.display = historial.length? 'inline-block':'none';
-    }
-
-    function loadTotals(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;
-      const historial=readJSON(getHistKey(email));
-      const totalesEl=document.getElementById('totales');totalesEl.innerHTML='';
-      if(!historial.length){totalesEl.innerHTML='<div class="small muted">Sin datos</div>';return}
-      const totalTarifa=historial.reduce((s,c)=>s+c.tarifa,0);
-      const totalGas=historial.reduce((s,c)=>s+c.gasolina,0);
-      const totalCarro=historial.reduce((s,c)=>s+c.carro,0);
-      const totalMant=historial.reduce((s,c)=>s+c.mantenimiento,0);
-      const totalOtros=historial.reduce((s,c)=>s+c.otros,0);
-      const totalNeto=historial.reduce((s,c)=>s+c.neto,0);
-      totalesEl.innerHTML=`<p>📈 Ganancia total: $${totalTarifa.toFixed(2)}</p>
-        <p>⛽ Gasolina total: $${totalGas.toFixed(2)}</p>
-        <p>🚗 Carro: $${totalCarro.toFixed(2)}</p>
-        <p>🔧 Mantenimiento: $${totalMant.toFixed(2)}</p>
-        <p>🧾 Otros: $${totalOtros.toFixed(2)}</p>
-        <p>✅ Ganancia neta acumulada: $${totalNeto.toFixed(2)}</p>`;
-    }
-
-    // --- Fuel prices (per user) ---
-    function saveFuelPrice(){
-      const email=localStorage.getItem('sigra_current');if(!email){alert('No estás logueado');return}
-      const p95=parseFloat(document.getElementById('price95').value)||0;
-      const p90=parseFloat(document.getElementById('price90').value)||0;
-      const pd=parseFloat(document.getElementById('pricediesel').value)||0;
-      if(!p95&&!p90&&!pd){alert('Ingresa al menos un precio');return}
-      const key=getFuelKey(email);
-      const arr=readJSON(key);
-      const item={fecha:new Date().toISOString(),g95:p95,g90:p90,diesel:pd};
-      arr.push(item);writeJSON(key,arr);
-      document.getElementById('price95').value='';document.getElementById('price90').value='';document.getElementById('pricediesel').value='';
-      loadFuelPrices();alert('Precio guardado');
-    }
-
-    function loadFuelPrices(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;
-      const arr=readJSON(getFuelKey(email));
-      const el=document.getElementById('fuelList');el.innerHTML='';
-      if(!arr.length){el.innerHTML='<div class="small muted">No hay precios guardados</div>';document.getElementById('lastFuel').innerText='-';return}
-      arr.slice().reverse().forEach(f=>{const d=new Date(f.fecha);const row=document.createElement('div');row.style.padding='6px 0';row.innerHTML=`<strong>${d.toLocaleDateString()}</strong> — 95: ${f.g95?('$'+f.g95):'-'} • 90: ${f.g90?('$'+f.g90):'-'} • Diésel: ${f.diesel?('$'+f.diesel):'-'}`;el.appendChild(row)})
-      const last=arr[arr.length-1];document.getElementById('lastFuel').innerText=`95:${last.g95||'-'} 90:${last.g90||'-'} D:${last.diesel||'-'}`;
-    }
-
-    // --- PDF Export ---
-    function exportPDF(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;const historial=readJSON(getHistKey(email));
-      const { jsPDF } = window.jspdf;const doc=new jsPDF();
-      doc.setFontSize(16);doc.text('Informe de Conductor - SIGRA',14,18);
-      doc.setFontSize(10);doc.text('Usuario: '+email,14,24);
-      const rows = historial.map((c,i)=>[i+1,new Date(c.fecha).toLocaleString(),c.tarifa.toFixed(2),c.gasolina.toFixed(2),c.carro.toFixed(2),c.mantenimiento.toFixed(2),c.otros.toFixed(2),c.neto.toFixed(2)]);
-      doc.autoTable({startY:30,head:[['#','Fecha','Tarifa','Gas','Carro','Mant','Otros','Neto']],body:rows,styles:{fontSize:8}});
-      doc.save('informe_SIGRA_'+email.replace(/@/g,'_')+'.pdf');
-    }
-
-    // --- Chart ---
-    let chartInstance=null;
-    function renderChart(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;
-      const historial=readJSON(getHistKey(email));
-      const ctx=document.getElementById('grafico').getContext('2d');
-      const labels=historial.slice(-10).map(c=>new Date(c.fecha).toLocaleDateString());
-      const neto=historial.slice(-10).map(c=>c.neto);
-      const gas=historial.slice(-10).map(c=>c.gasolina);
-      if(chartInstance)chartInstance.destroy();
-      chartInstance=new Chart(ctx,{type:'bar',data:{labels, datasets:[{label:'Ganancia Neta',data:neto,backgroundColor:'rgba(46,204,113,0.6)'},{label:'Gasolina',data:gas,backgroundColor:'rgba(52,152,219,0.6)'}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
-    }
-
-    // --- Init ---
     function init(){
       updateUserCount();
-      // hide splash after animation
-      setTimeout(()=>{document.getElementById('splash').style.display='none';document.body.style.background=varOr('--bg','#f4f4f9')},5500);
-      // If already logged in, show app
-      const current = localStorage.getItem('sigra_current');
-      if(current){showAppForUser(current)}
+      // splash dura 3 segundos
+      setTimeout(()=>{
+        const splash = document.getElementById('splash');
+        splash.classList.add('fade-out'); // animación suave
+        setTimeout(()=>{
+          splash.style.display='none';
+          document.body.style.background = "var(--bg)"; // fondo corregido
+          const current=localStorage.getItem('sigra_current');
+          if(!current){
+            document.getElementById('authWrap').style.display='flex';
+          } else {
+            showAppForUser(current);
+          }
+        },1500); // dura lo mismo que la animación
+      },3000);
     }
-    function varOr(name,def){try{return getComputedStyle(document.documentElement).getPropertyValue(name)||def}catch(e){return def}}
-
-    // small helpers
-    window.addEventListener('load',()=>{init();document.getElementById('splash').style.animation='fadeOut 1s ease forwards';});
-
+    window.addEventListener('load',init);
   </script>
 </body>
 </html>
