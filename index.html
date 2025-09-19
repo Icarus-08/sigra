@@ -2,161 +2,204 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Sigra - Gestión de Conductores</title>
+  <title>Sigra - Gestor de Conductores</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    input, button { margin: 5px; padding: 5px; }
-    .hidden { display: none; }
+    body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5}
+    header{background:#333;color:#fff;padding:10px;text-align:center}
+    main{padding:20px}
+    section{margin-bottom:20px;padding:15px;background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+    input,button{margin:5px;padding:8px;border-radius:4px;border:1px solid #ccc}
+    button{cursor:pointer;background:#333;color:#fff}
+    .hidden{display:none}
+    #historial div,#fuelList div{padding:5px;border-bottom:1px solid #ddd}
   </style>
 </head>
-<body onload="initApp()">
+<body>
+  <header>
+    <h1>🚖 Sigra - Gestor de Conductores</h1>
+  </header>
+  <main>
+    <!-- Login/Registro -->
+    <section id="authWrap">
+      <h2>Login</h2>
+      <input id="loginEmail" placeholder="Correo"><br>
+      <input id="loginPass" type="password" placeholder="Contraseña"><br>
+      <button onclick="login()">Ingresar</button>
 
-  <h1>🚖 Sistema Sigra</h1>
+      <h2>Registro</h2>
+      <input id="regName" placeholder="Nombre"><br>
+      <input id="regLast" placeholder="Apellido"><br>
+      <input id="regEmail" placeholder="Correo"><br>
+      <input id="regPass" type="password" placeholder="Contraseña"><br>
+      <button onclick="register()">Registrar</button>
+    </section>
 
-  <!-- Registro -->
-  <div id="registerSection">
-    <h2>Registro</h2>
-    <input type="text" id="regEmail" placeholder="Correo"><br>
-    <input type="password" id="regPass" placeholder="Contraseña"><br>
-    <label>
-      <input type="checkbox" id="regTerms"> Acepto los Términos y Condiciones
-    </label><br>
-    <button onclick="register()">Registrarse</button>
-  </div>
+    <!-- App -->
+    <section id="appWrap" class="hidden">
+      <h2>Bienvenido: <span id="currentUserLabel"></span></h2>
+      <button onclick="logout()">Cerrar sesión</button>
 
-  <!-- Login -->
-  <div id="loginSection">
-    <h2>Iniciar Sesión</h2>
-    <input type="text" id="loginEmail" placeholder="Correo"><br>
-    <input type="password" id="loginPass" placeholder="Contraseña"><br>
-    <button onclick="login()">Entrar</button>
-  </div>
+      <!-- Registrar carrera -->
+      <h3>Registrar carrera</h3>
+      <input id="dist" type="number" placeholder="Distancia (km)">
+      <input id="tarifa" type="number" placeholder="Tarifa por km">
+      <button onclick="addTrip()">Registrar</button>
 
-  <!-- Panel principal -->
-  <div id="mainSection" class="hidden">
-    <h2>Bienvenido</h2>
-    <p id="userInfo"></p>
-    <button onclick="logout()">Cerrar Sesión</button>
+      <!-- Historial -->
+      <h3>Historial</h3>
+      <div id="historial"></div>
 
-    <!-- Combustible -->
-    <div id="fuelSection">
+      <!-- Totales -->
+      <h3>Totales</h3>
+      <div id="totales"></div>
+
+      <!-- Precios de combustible -->
       <h3>Precios de Combustible</h3>
-      
-      <!-- Solo visible para admin autorizado -->
-      <div id="fuelAdmin" style="display:none;">
-        <input type="number" id="price95" placeholder="Precio Gasolina 95">
-        <input type="number" id="price90" placeholder="Precio Gasolina 90">
-        <input type="number" id="pricediesel" placeholder="Precio Diesel">
+      <div id="fuelSection">
+        <input id="price95" type="number" placeholder="Gasolina 95">
+        <input id="price90" type="number" placeholder="Gasolina 90">
+        <input id="pricediesel" type="number" placeholder="Diésel">
         <button onclick="saveFuelPrice()">Guardar Precio</button>
+        <div id="fuelList"></div>
       </div>
+    </section>
+  </main>
 
-      <!-- Visible para todos -->
-      <div id="fuelList"></div>
-    </div>
-  </div>
+<script>
+const USERS_KEY="sigra_users";
+const TRIPS_KEY="sigra_trips_";
+const FUEL_KEY="sigra_fuel_";
 
-  <script>
-    // Utilidades JSON en localStorage
-    function readJSON(key){return JSON.parse(localStorage.getItem(key)||"[]");}
-    function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val));}
-    function getFuelKey(email){return "fuel_"+email;}
+let currentRole="conductor";
 
-    // Registro
-    function register(){
-      const email=document.getElementById('regEmail').value.trim();
-      const pass=document.getElementById('regPass').value.trim();
-      const terms=document.getElementById('regTerms').checked;
-      if(!email||!pass){alert("Completa todos los campos");return;}
-      if(!terms){alert("Debes aceptar los Términos y Condiciones");return;}
-      let users=readJSON("sigra_users");
-      if(users.find(u=>u.email===email)){alert("El usuario ya existe");return;}
-      users.push({email:email,pass:pass});
-      writeJSON("sigra_users",users);
-      alert("✅ Registro exitoso");
-      document.getElementById('regEmail').value='';
-      document.getElementById('regPass').value='';
-      document.getElementById('regTerms').checked=false;
-    }
+// Utilidades
+function readJSON(k){return JSON.parse(localStorage.getItem(k)||"[]")}
+function writeJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function hashPass(p){return btoa(p)} // no es seguro pero sirve para demo
+function getTripKey(email){return TRIPS_KEY+email}
+function getFuelKey(email){return FUEL_KEY+email}
 
-    // Login
-    function login(){
-      const email=document.getElementById('loginEmail').value.trim();
-      const pass=document.getElementById('loginPass').value.trim();
-      let users=readJSON("sigra_users");
-      const user=users.find(u=>u.email===email && u.pass===pass);
-      if(!user){alert("Credenciales incorrectas");return;}
-      localStorage.setItem("sigra_current",email);
-      showMain();
-    }
+// Registro
+function register(){
+  const name=document.getElementById('regName').value.trim();
+  const last=document.getElementById('regLast').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const pass=document.getElementById('regPass').value.trim();
+  if(!name||!last||!email||!pass){alert("Completa todos los campos");return}
+  const users=readJSON(USERS_KEY);
+  if(users.find(u=>u.email===email)){alert("Correo ya registrado");return}
+  const role = users.length===0 ? "admin" : "conductor";
+  users.push({name,last,email,password:hashPass(pass),role,created:new Date().toISOString()});
+  writeJSON(USERS_KEY,users);
+  alert("Usuario registrado. Rol asignado: "+role);
+}
 
-    // Logout
-    function logout(){
-      localStorage.removeItem("sigra_current");
-      location.reload();
-    }
+// Login
+function login(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value.trim();
+  const users=readJSON(USERS_KEY);
+  const u=users.find(x=>x.email===email && x.password===hashPass(pass));
+  if(!u){alert("Credenciales incorrectas");return}
+  localStorage.setItem('sigra_current',email);
+  showAppForUser(email);
+}
 
-    // Mostrar sección principal
-    function showMain(){
-      const email=localStorage.getItem("sigra_current");
-      document.getElementById("registerSection").style.display="none";
-      document.getElementById("loginSection").style.display="none";
-      document.getElementById("mainSection").classList.remove("hidden");
-      document.getElementById("userInfo").innerText="Usuario: "+email;
-      toggleFuelSection();
-    }
+function showAppForUser(email){
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('appWrap').style.display='block';
+  const users=readJSON(USERS_KEY);
+  const u=users.find(x=>x.email===email);
+  currentRole=u?.role||"conductor";
+  document.getElementById('currentUserLabel').innerText = `${email} (${currentRole})`;
+  loadHistorial();
+  loadTotals();
+  loadFuelPrices();
+  toggleFuelSection();
+}
 
-    // Combustible
-    function saveFuelPrice(){
-      const email=localStorage.getItem('sigra_current');
-      if(email !== "Hiroemiya1412@gmail.com"){
-        alert("❌ Solo el usuario autorizado puede guardar precios de combustible.");
-        return;
-      }
-      const p95=parseFloat(document.getElementById('price95').value)||0;
-      const p90=parseFloat(document.getElementById('price90').value)||0;
-      const pd=parseFloat(document.getElementById('pricediesel').value)||0;
-      if(!p95&&!p90&&!pd){alert("Ingresa al menos un precio");return}
-      const key=getFuelKey("Hiroemiya1412@gmail.com");
-      const arr=readJSON(key);
-      const item={fecha:new Date().toISOString(),g95:p95,g90:p90,diesel:pd};
-      arr.push(item);
-      writeJSON(key,arr);
-      document.getElementById('price95').value='';
-      document.getElementById('price90').value='';
-      document.getElementById('pricediesel').value='';
-      loadFuelPrices();
-      alert("✅ Precio guardado");
-    }
+function logout(){
+  localStorage.removeItem('sigra_current');
+  document.getElementById('appWrap').style.display='none';
+  document.getElementById('authWrap').style.display='block';
+}
 
-    function loadFuelPrices(){
-      const arr=readJSON(getFuelKey("Hiroemiya1412@gmail.com"));
-      const div=document.getElementById('fuelList');
-      div.innerHTML='';
-      if(arr.length>0){
-        const f=arr[arr.length-1]; // último precio
-        div.innerHTML=`<div><b>Último precio (${f.fecha.split("T")[0]}):</b><br>
-          G95=${f.g95}, G90=${f.g90}, Diesel=${f.diesel}</div>`;
-      }else{
-        div.innerHTML="<i>No hay precios registrados aún.</i>";
-      }
-    }
+// Registrar carrera
+function addTrip(){
+  const dist=parseFloat(document.getElementById('dist').value)||0;
+  const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
+  if(!dist||!tarifa){alert("Completa los datos");return}
+  const email=localStorage.getItem('sigra_current');
+  const key=getTripKey(email);
+  const arr=readJSON(key);
+  const ingreso=dist*tarifa;
+  arr.push({fecha:new Date().toISOString(),dist,tarifa,ingreso});
+  writeJSON(key,arr);
+  document.getElementById('dist').value='';
+  document.getElementById('tarifa').value='';
+  loadHistorial();loadTotals();
+}
 
-    function toggleFuelSection(){
-      const email=localStorage.getItem('sigra_current');
-      const adminSection=document.getElementById("fuelAdmin");
-      if(email === "Hiroemiya1412@gmail.com"){
-        adminSection.style.display="block";
-      }else{
-        adminSection.style.display="none";
-      }
-      loadFuelPrices();
-    }
+function loadHistorial(){
+  const email=localStorage.getItem('sigra_current');
+  const arr=readJSON(getTripKey(email));
+  const div=document.getElementById('historial');
+  div.innerHTML='';
+  arr.forEach(t=>{
+    div.innerHTML+=`<div>${t.fecha}: ${t.dist} km x ${t.tarifa} = ${t.ingreso}</div>`;
+  });
+}
 
-    // Inicialización
-    function initApp(){
-      const email=localStorage.getItem("sigra_current");
-      if(email){showMain();}
-    }
-  </script>
+function loadTotals(){
+  const email=localStorage.getItem('sigra_current');
+  const arr=readJSON(getTripKey(email));
+  let total=0;arr.forEach(t=>total+=t.ingreso);
+  document.getElementById('totales').innerText="Total ingresos: "+total;
+}
+
+// Combustible
+function saveFuelPrice(){
+  if(currentRole!=="admin"){alert("Solo el admin puede guardar precios de combustible.");return}
+  const email=localStorage.getItem('sigra_current');
+  const p95=parseFloat(document.getElementById('price95').value)||0;
+  const p90=parseFloat(document.getElementById('price90').value)||0;
+  const pd=parseFloat(document.getElementById('pricediesel').value)||0;
+  if(!p95&&!p90&&!pd){alert("Ingresa al menos un precio");return}
+  const key=getFuelKey(email);
+  const arr=readJSON(key);
+  arr.push({fecha:new Date().toISOString(),g95:p95,g90:p90,diesel:pd});
+  writeJSON(key,arr);
+  document.getElementById('price95').value='';
+  document.getElementById('price90').value='';
+  document.getElementById('pricediesel').value='';
+  loadFuelPrices();
+  alert("Precio guardado ✅");
+}
+
+function loadFuelPrices(){
+  const email=localStorage.getItem('sigra_current');
+  const arr=readJSON(getFuelKey(email));
+  const div=document.getElementById('fuelList');
+  div.innerHTML='';
+  arr.forEach(f=>{
+    div.innerHTML+=`<div>${f.fecha}: G95=${f.g95}, G90=${f.g90}, Diesel=${f.diesel}</div>`;
+  });
+}
+
+function toggleFuelSection(){
+  const fuelBlock=document.getElementById("fuelSection");
+  if(currentRole!=="admin"){
+    fuelBlock.querySelectorAll("input,button").forEach(el=>el.disabled=true);
+  }else{
+    fuelBlock.querySelectorAll("input,button").forEach(el=>el.disabled=false);
+  }
+}
+
+// Auto login si hay sesión
+window.onload=function(){
+  const email=localStorage.getItem('sigra_current');
+  if(email){showAppForUser(email)}
+}
+</script>
 </body>
 </html>
