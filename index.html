@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SIGRA - Gestor de Conductor 🚖</title>
-  <style>
-    :root{--primary:#007bff;--bg:#f4f4f9;--card-bg:#fff}
-    body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:black;color:#333}
-    .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
-    .card{width:100%;max-width:920px;background:var(--card-bg);padding:1.25rem;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
-    input,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:15px}
-    button{background:var(--primary);color:#fff;border:none;cursor:pointer}
-    button.secondary{background:#6c757d}
-    .hidden{display:none}
-    .row{display:flex;gap:12px}
-    .col{flex:1}
-    .small{font-size:.9rem;color:#555}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
-  </style>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGRA - Gestor de Conductor 🚖</title>
+<style>
+  :root{--primary:#007bff;--bg:#f4f4f9;--card-bg:#fff}
+  body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:black;color:#333}
+  .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+  .card{width:100%;max-width:920px;background:var(--card-bg);padding:1.25rem;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+  input,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:15px}
+  button{background:var(--primary);color:#fff;border:none;cursor:pointer}
+  button.secondary{background:#6c757d}
+  .hidden{display:none}
+  .row{display:flex;gap:12px}
+  .col{flex:1}
+  .small{font-size:.9rem;color:#555}
+  .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
+</style>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -147,13 +147,14 @@
     document.getElementById('appWrap').style.display='block';
     document.getElementById('currentUserLabel').innerText = email;
 
-    // Revisar rol
     const userDoc = await db.collection('users').doc(uid).get();
     const isAdmin = userDoc.data().isAdmin;
-    if(!isAdmin){document.getElementById('fuelInputs').style.display='none';}
 
-    loadHistorial();
-    loadFuelPrices();
+    // Solo ocultar inputs de admin
+    if(!isAdmin){document.getElementById('fuelInputs').querySelectorAll('input, button').forEach(el=>el.style.display='none');}
+
+    await loadHistorial();
+    await loadFuelPrices();
     renderChart();
   }
 
@@ -173,7 +174,11 @@
     const snapshot = await db.collection('fuel_prices').orderBy('fecha','desc').limit(10).get();
     const el = document.getElementById('fuelList');
     el.innerHTML='';
-    if(snapshot.empty){el.innerHTML='<div class="small muted">No hay precios guardados</div>';document.getElementById('lastFuel').innerText='-'; return;}
+    if(snapshot.empty){
+      el.innerHTML='<div class="small muted">No hay precios guardados</div>';
+      document.getElementById('lastFuel').innerText='-';
+      return;
+    }
     snapshot.forEach(doc=>{
       const f = doc.data();
       const d = new Date(f.fecha);
@@ -183,61 +188,55 @@
     document.getElementById('lastFuel').innerText = `95:${last.g95||'-'} 90:${last.g90||'-'} D:${last.diesel||'-'}`;
   }
 
-  async function calcular(){
-    const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-    const tiempo=parseFloat(document.getElementById('tiempo').value)||0;
-    const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
-    const carro=parseFloat(document.getElementById('carro').value)||0;
-    const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-    const otros=parseFloat(document.getElementById('otros').value)||0;
-    const neto=(tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);
-    document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
-    return {tarifa,tiempo,gasolina,carro,mantenimiento,otros,neto};
-  }
-
+  // Carreras
   async function guardarCarrera(){
-    const data = await calcular();
     const uid = auth.currentUser.uid;
-    await db.collection('carreras').add({
-      uid,
-      email: auth.currentUser.email,
-      ...data,
-      date: new Date().toISOString()
-    });
+    const email = auth.currentUser.email;
+    const tarifa = parseFloat(document.getElementById('tarifa').value)||0;
+    const tiempo = parseFloat(document.getElementById('tiempo').value)||0;
+    const gasolina = parseFloat(document.getElementById('gasolina').value)||0;
+    const carro = parseFloat(document.getElementById('carro').value)||0;
+    const mantenimiento = parseFloat(document.getElementById('mantenimiento').value)||0;
+    const otros = parseFloat(document.getElementById('otros').value)||0;
+    const neto = (tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);
+    await db.collection('carreras').add({email,fecha:new Date().toISOString(),tarifa,tiempo,gasolina,carro,mantenimiento,otros,neto});
     alert('Carrera guardada');
     loadHistorial();
     renderChart();
   }
 
   async function loadHistorial(){
-    const uid = auth.currentUser.uid;
-    const snapshot = await db.collection('carreras').where('uid','==',uid).orderBy('date','desc').get();
-    const el = document.getElementById('historialList'); el.innerHTML='';
-    let totalNeto=0,totalGas=0,totalCarro=0,totalMan=0,totalOtros=0;
-    snapshot.forEach(doc=>{
+    const snapshot = await db.collection('carreras').orderBy('fecha','desc').get();
+    const el = document.getElementById('historialList');
+    el.innerHTML='';
+    const email = auth.currentUser.email;
+    const userData = snapshot.docs.filter(d=>d.data().email===email);
+    if(!userData.length){el.innerHTML='<div class="small muted">No hay carreras</div>';return;}
+    let totales = {neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0};
+    userData.forEach(doc=>{
       const c = doc.data();
-      const d = new Date(c.date);
+      const d = new Date(c.fecha);
       el.innerHTML += `<div>${d.toLocaleDateString()} — Neto: $${c.neto.toFixed(2)}</div>`;
-      totalNeto+=c.neto; totalGas+=c.gasolina; totalCarro+=c.carro; totalMan+=c.mantenimiento; totalOtros+=c.otros;
+      totales.neto += c.neto; totales.gasolina+=c.gasolina; totales.carro+=c.carro;
+      totales.mantenimiento+=c.mantenimiento; totales.otros+=c.otros;
     });
-    const totalesEl = document.getElementById('totales');
-    totalesEl.innerHTML=`<div>Neto: $${totalNeto.toFixed(2)}</div><div>Gasolina: $${totalGas.toFixed(2)}</div><div>Carro: $${totalCarro.toFixed(2)}</div><div>Mantenimiento: $${totalMan.toFixed(2)}</div><div>Otros: $${totalOtros.toFixed(2)}</div>`;
+    document.getElementById('totales').innerHTML = `<div>Neto: $${totales.neto.toFixed(2)}</div>
+    <div>Gasolina: $${totales.gasolina.toFixed(2)}</div>
+    <div>Carro: $${totales.carro.toFixed(2)}</div>
+    <div>Mantenimiento: $${totales.mantenimiento.toFixed(2)}</div>
+    <div>Otros: $${totales.otros.toFixed(2)}</div>`;
   }
 
   async function renderChart(){
-    const uid = auth.currentUser.uid;
-    const snapshot = await db.collection('carreras').where('uid','==',uid).orderBy('date','desc').limit(10).get();
-    const labels = [], neto=[], gastos=[];
-    snapshot.forEach(doc=>{
-      const c = doc.data();
-      labels.push(new Date(c.date).toLocaleDateString());
-      neto.push(c.neto);
-      gastos.push(c.gasolina+c.carro+c.mantenimiento+c.otros);
-    });
     const ctx=document.getElementById('grafico').getContext('2d');
+    const snapshot = await db.collection('carreras').orderBy('fecha','desc').get();
+    const email = auth.currentUser.email;
+    const data = snapshot.docs.filter(d=>d.data().email===email).slice(0,10);
+    const labels = data.map(d=>new Date(d.data().fecha).toLocaleDateString()).reverse();
+    const neto = data.map(d=>d.data().neto).reverse();
+    const gastos = data.map(d=>d.data().gasolina+d.data().carro+d.data().mantenimiento+d.data().otros).reverse();
     new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true,plugins:{legend:{position:'top'}}}});
   }
-
 </script>
 </body>
 </html>
