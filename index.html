@@ -109,6 +109,7 @@
               <input id="carro" placeholder="Gastos carro $" />
             </div>
             <div class="row">
+              <input id="gasolinaDinero" placeholder="Dinero gasolina $" />
               <input id="mantenimiento" placeholder="Mantenimiento $" />
               <input id="otros" placeholder="Otros gastos $" />
             </div>
@@ -227,29 +228,38 @@
     }
 
     function calcular(){
-      const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-      const tiempo=parseFloat(document.getElementById('tiempo').value)||0;
-      const gasolina=getLastFuelPrice();
-      const carro=parseFloat(document.getElementById('carro').value)||0;
-      const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-      const otros=parseFloat(document.getElementById('otros').value)||0;
-      const neto=(tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);
-      document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
+      const tarifa = parseFloat(document.getElementById('tarifa').value) || 0;
+      const gasolinaFija = getLastFuelPrice();
+      const gasolinaDinero = parseFloat(document.getElementById('gasolinaDinero').value) || 0;
+      const carro = parseFloat(document.getElementById('carro').value) || 0;
+      const mantenimiento = parseFloat(document.getElementById('mantenimiento').value) || 0;
+      const otros = parseFloat(document.getElementById('otros').value) || 0;
+
+      const neto = tarifa - (gasolinaFija + gasolinaDinero + carro + mantenimiento + otros);
+      document.getElementById('resultado').innerText = 'Ganancia estimada: $' + neto.toFixed(2);
     }
 
     function guardarCarrera(){
-      const email=localStorage.getItem('sigra_current'); if(!email){alert('No estás logueado');return}
-      const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-      const tiempo=parseFloat(document.getElementById('tiempo').value)||0;
-      const gasolina=getLastFuelPrice();
-      const carro=parseFloat(document.getElementById('carro').value)||0;
-      const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-      const otros=parseFloat(document.getElementById('otros').value)||0;
-      const neto=(tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);
-      const arr=readJSON(CARRERAS_KEY);
-      arr.push({email,date:new Date().toISOString(),tarifa,tiempo,gasolina,carro,mantenimiento,otros,neto});
-      writeJSON(CARRERAS_KEY,arr);
-      loadHistorial(); loadTotals(); renderChart(); alert('Carrera guardada');
+      const email = localStorage.getItem('sigra_current'); 
+      if(!email){alert('No estás logueado'); return;}
+
+      const tarifa = parseFloat(document.getElementById('tarifa').value) || 0;
+      const gasolinaFija = getLastFuelPrice();
+      const gasolinaDinero = parseFloat(document.getElementById('gasolinaDinero').value) || 0;
+      const carro = parseFloat(document.getElementById('carro').value) || 0;
+      const mantenimiento = parseFloat(document.getElementById('mantenimiento').value) || 0;
+      const otros = parseFloat(document.getElementById('otros').value) || 0;
+
+      const neto = tarifa - (gasolinaFija + gasolinaDinero + carro + mantenimiento + otros);
+
+      const arr = readJSON(CARRERAS_KEY);
+      arr.push({email, date: new Date().toISOString(), tarifa, gasolinaFija, gasolinaDinero, carro, mantenimiento, otros, neto});
+      writeJSON(CARRERAS_KEY, arr);
+
+      loadHistorial();
+      loadTotals();
+      renderChart();
+      alert('Carrera guardada');
     }
 
     function loadHistorial(){
@@ -266,7 +276,7 @@
     function loadTotals(){
       const arr=readJSON(CARRERAS_KEY); const current=localStorage.getItem('sigra_current');
       const totales=arr.filter(x=>x.email===current).reduce((acc,v)=>{
-        acc.neto+=v.neto; acc.gasolina+=v.gasolina; acc.carro+=v.carro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
+        acc.neto+=v.neto; acc.gasolina+=v.gasolinaFija+v.gasolinaDinero; acc.carro+=v.carro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
         return acc;
       },{neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0});
       const el=document.getElementById('totales');
@@ -283,7 +293,7 @@
       const data=arr.filter(x=>x.email===current).slice(-10);
       const labels=data.map(d=>new Date(d.date).toLocaleDateString());
       const neto=data.map(d=>d.neto);
-      const gastos=data.map(d=>d.gasolina+d.carro+d.mantenimiento+d.otros);
+      const gastos=data.map(d=>d.gasolinaFija + d.gasolinaDinero + d.carro + d.mantenimiento + d.otros);
       new Chart(ctx,{type:'bar',data:{labels, datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true,plugins:{legend:{position:'top'}}}});
     }
 
@@ -298,4 +308,3 @@
   </script>
 </body>
 </html>
-
