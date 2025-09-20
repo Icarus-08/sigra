@@ -7,35 +7,55 @@
   <style>
     :root{--primary:#007bff;--bg:#f4f4f9;--card-bg:#fff}
     body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:black;color:#333}
+    /* Splash */
     .splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:black;color:var(--primary);font-size:3rem;letter-spacing:.5rem;z-index:30;opacity:1}
-    .sigra span{opacity:0;animation:fadeInLetter 1.5s forwards}
-    .sigra span:nth-child(1){animation-delay:1.3s}
-    .sigra span:nth-child(2){animation-delay:1.6s}
-    .sigra span:nth-child(3){animation-delay:1.9s}
-    .sigra span:nth-child(4){animation-delay:2.2s}
-    .sigra span:nth-child(5){animation-delay:2.5s}
+    .sigra span{opacity:0;animation:fadeInLetter 0.5s forwards}
+    .sigra span:nth-child(1){animation-delay:0.3s}
+    .sigra span:nth-child(2){animation-delay:0.6s}
+    .sigra span:nth-child(3){animation-delay:0.9s}
+    .sigra span:nth-child(4){animation-delay:1.2s}
+    .sigra span:nth-child(5){animation-delay:1.5s}
     @keyframes fadeInLetter{
       from{opacity:0;filter:blur(4px);transform:translateY(20px);}
       to{opacity:1;filter:blur(0);transform:translateY(0);}
     }
-    @keyframes fadeOut {from { opacity: 1; } to { opacity: 0; visibility: hidden; }}
-    .splash.fade-out { animation: fadeOut 1.5s ease forwards; }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; visibility: hidden; }
+    }
+    .splash.fade-out {
+      animation: fadeOut 1.5s ease forwards;
+    }
+    /* Containers */
     .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
     .card{width:100%;max-width:920px;background:var(--card-bg);padding:1.25rem;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
     .hidden{display:none}
     h1,h2,h3{margin:.25rem 0}
     .row{display:flex;gap:12px}
+    .col{flex:1}
     input,select,button,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:15px}
     button{background:var(--primary);color:#fff;border:none;cursor:pointer}
     button.secondary{background:#6c757d}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
     .small{font-size:.9rem;color:#555}
     .muted{color:#666}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:12px}
+    .list{max-height:260px;overflow:auto;padding:8px;background:#fafafa;border-radius:8px}
+    .actions{display:flex;gap:8px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
+    footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .2s;z-index:50}
     .modal.show{visibility:visible;opacity:1}
     .modal .content{background:var(--card-bg);padding:1rem;border-radius:10px;max-width:720px;max-height:80vh;overflow:auto}
     .auth-wrap{width:420px;max-width:95vw}
     .error{color:#c0392b;font-size:.85rem;margin-top:-6px;margin-bottom:6px}
   </style>
+
+  <!-- Librerías (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <!-- SPLASH -->
@@ -49,6 +69,8 @@
   <div class="center-wrap" id="authWrap" style="display:none">
     <div class="card auth-wrap" id="loginCard">
       <h1 style="color:var(--primary);margin-bottom:8px">SIGRA</h1>
+
+      <!-- LOGIN VIEW -->
       <div id="loginView">
         <input id="loginEmail" type="email" placeholder="Correo" />
         <input id="loginPass" type="password" placeholder="Contraseña" />
@@ -59,6 +81,7 @@
         <p class="small muted">Al continuar aceptas nuestros <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></p>
       </div>
 
+      <!-- REGISTER VIEW -->
       <div id="registerView" class="hidden">
         <h2>Crear Cuenta</h2>
         <div class="row">
@@ -80,21 +103,19 @@
       </div>
 
       <div style="margin-top:10px" class="small muted">Usuarios registrados: <span id="userCount">0</span></div>
-      <div id="resetContainer" style="margin-top:8px;text-align:center;display:none">
-        <button class="secondary" style="background:#c0392b" onclick="resetAllData()">Borrar todo</button>
-      </div>
     </div>
   </div>
 
-  <!-- MODALES -->
+  <!-- MODAL TERMINOS -->
   <div class="modal" id="termsModal">
     <div class="content">
       <h2 style="color:var(--primary);text-align:center">Términos y Condiciones</h2>
-      <p><b>Confidencialidad de la Información</b><br>Todos los datos se almacenan localmente en el navegador. No se envía información a servidores.</p>
+      <p><b>Confidencialidad de la Información</b><br>Todos los datos se almacenan localmente en el navegador. No se envía información a servidores. Usa contraseñas seguras. Esta aplicación es para uso local/educativo.</p>
       <div style="text-align:center;margin-top:12px"><button onclick="acceptTerms()">Aceptar</button> <button class="secondary" onclick="rejectTerms()">Rechazar</button></div>
     </div>
   </div>
 
+  <!-- MODAL DE ÉXITO -->
   <div class="modal" id="successModal">
     <div class="content" style="text-align:center">
       <h2 style="color:var(--primary)">✅ Cuenta creada</h2>
@@ -105,9 +126,9 @@
     </div>
   </div>
 
-  <!-- GESTIÓN SIGRA -->
-  <div id="appWrap" style="display:none;padding:18px;background:var(--bg);">
-    <!-- Contenido cargado dinámicamente -->
+  <!-- GESTOR PRINCIPAL -->
+  <div style="display:none;padding:18px" id="appWrap">
+    <!-- Aquí iría todo el gestor (carreras, totales, combustible con restricción, gráfico, PDF, etc.) -->
   </div>
 
   <script>
@@ -115,21 +136,12 @@
     const SESSIONS_KEY = 'sigra_sessions';
     const MASTER_FUEL_KEY = 'sigra_fuel_master';
     const SPECIAL_EMAIL = 'hiroemiya1412@gmail.com';
+    const PRECIOS_FIJOS = { g95: 1.25, g90: 1.10, diesel: 0.95 };
+
     const sanitizeEmailKey = (email)=> (email||'').trim().toLowerCase();
     function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
     function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
     function hashPass(p){return btoa(p)}
-
-    function ensureAdminExists(){
-      let users = readJSON(USERS_KEY);
-      if(!users.find(u=>u.email===SPECIAL_EMAIL)){
-        users.push({
-          name:"Admin", last:"SIGRA", email:SPECIAL_EMAIL,
-          password:hashPass("2004"), created:new Date().toISOString()
-        });
-        writeJSON(USERS_KEY,users);
-      }
-    }
 
     function showRegister(){document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.remove('hidden')}
     function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
@@ -167,91 +179,29 @@
       document.getElementById('successModal').classList.add('show');
     }
 
-    function closeSuccessModal(){document.getElementById('successModal').classList.remove('show');showLogin();}
-
-    function resetAllData(){
-      const code = prompt("Introduce el código para borrar todo:");
-      if(code !== "Icarus_08"){alert("❌ Código incorrecto.");return;}
-      if(confirm("⚠️ Esto borrará TODAS las cuentas y sesiones. ¿Seguro?")){
-        localStorage.removeItem(USERS_KEY);
-        localStorage.removeItem(SESSIONS_KEY);
-        localStorage.removeItem(MASTER_FUEL_KEY);
-        localStorage.removeItem('sigra_current');
-        updateUserCount();
-        alert("✅ Datos borrados. Reingresa.");
-        showLogin();
-        document.getElementById('authWrap').style.display='flex';
-        document.getElementById('appWrap').style.display='none';
-        ensureAdminExists();
-      }
-    }
-
-    function doLogin(){
-      const email=sanitizeEmailKey(document.getElementById('loginEmail').value);
-      const pass=document.getElementById('loginPass').value;
-      const users=readJSON(USERS_KEY);
-      const user=users.find(u=>u.email===email && u.password===hashPass(pass));
-      if(!user){alert("Correo o contraseña incorrectos");return;}
-
-      localStorage.setItem('sigra_current',email);
-
-      document.getElementById('authWrap').style.display='none';
-      const appWrap = document.getElementById('appWrap');
-      appWrap.style.display='block';
-      appWrap.innerHTML = `
-        <h1 style="color:var(--primary)">Gestión SIGRA</h1>
-        <p>Bienvenido, ${user.name} ${user.last}. Aquí verás todas las herramientas de gestión de conductores.</p>
-        <ul>
-          <li>Precios de gasolina</li>
-          <li>Registro de carreras</li>
-          <li>Ganancias diarias</li>
-          <li>Estimación de tiempo de rutas</li>
-        </ul>
-      `;
-
-      if(email===SPECIAL_EMAIL){document.getElementById('resetContainer').style.display='block';} 
-      else{document.getElementById('resetContainer').style.display='none';}
-
-      alert("Bienvenido " + user.name);
+    function closeSuccessModal(){
+      document.getElementById('successModal').classList.remove('show');
+      showLogin();
     }
 
     function init(){
-      ensureAdminExists();
       updateUserCount();
+      // splash dura 3 segundos
       setTimeout(()=>{
-        const splash=document.getElementById('splash');
-        splash.classList.add('fade-out');
+        const splash = document.getElementById('splash');
+        splash.classList.add('fade-out'); // animación suave
         setTimeout(()=>{
           splash.style.display='none';
-          document.body.style.background="var(--bg)";
+          document.body.style.background = "var(--bg)"; // fondo corregido
           const current=localStorage.getItem('sigra_current');
-          if(!current){document.getElementById('authWrap').style.display='flex';}
-          else{doLoginWithCurrent(current);}
-        },1500);
+          if(!current){
+            document.getElementById('authWrap').style.display='flex';
+          } else {
+            showAppForUser(current);
+          }
+        },1500); // dura lo mismo que la animación
       },3000);
     }
-
-    function doLoginWithCurrent(current){
-      const users = readJSON(USERS_KEY);
-      const user = users.find(u => u.email === current);
-      if(!user){document.getElementById('authWrap').style.display='flex'; return;}
-      document.getElementById('authWrap').style.display='none';
-      const appWrap = document.getElementById('appWrap');
-      appWrap.style.display='block';
-      appWrap.innerHTML = `
-        <h1 style="color:var(--primary)">Gestión SIGRA</h1>
-        <p>Bienvenido, ${user.name} ${user.last}. Aquí verás todas las herramientas de gestión de conductores.</p>
-        <ul>
-          <li>Precios de gasolina</li>
-          <li>Registro de carreras</li>
-          <li>Ganancias diarias</li>
-          <li>Estimación de tiempo de rutas</li>
-        </ul>
-      `;
-      if(current===SPECIAL_EMAIL){document.getElementById('resetContainer').style.display='block';} 
-      else{document.getElementById('resetContainer').style.display='none';}
-    }
-
     window.addEventListener('load',init);
   </script>
 </body>
