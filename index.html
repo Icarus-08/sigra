@@ -5,40 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIGRA - Gestor de Conductor 🚖</title>
   <style>
-    :root{--primary:#007bff;--bg:#f4f4f9;--card-bg:#fff}
-    body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:black;color:#333}
-    .splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:black;color:var(--primary);font-size:3rem;letter-spacing:.5rem;z-index:30}
-    .sigra span{opacity:0;animation:fadeInLetter 0.5s forwards}
-    .sigra span:nth-child(1){animation-delay:0.5s}
-    .sigra span:nth-child(2){animation-delay:1.0s}
-    .sigra span:nth-child(3){animation-delay:1.3s}
-    .sigra span:nth-child(4){animation-delay:1.5s}
-    .sigra span:nth-child(5){animation-delay:1.8s}
-    @keyframes fadeInLetter{from{opacity:0;filter:blur(4px)}to{opacity:1;filter:blur(0)}}
-    .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
-    .card{width:100%;max-width:920px;background:var(--card-bg);padding:1.25rem;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
-    .hidden{display:none}
-    h1,h2,h3{margin:.25rem 0}
-    .row{display:flex;gap:12px}
-    .col{flex:1}
-    input,select,button,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:15px}
-    button{background:var(--primary);color:#fff;border:none;cursor:pointer}
-    button.secondary{background:#6c757d}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .small{font-size:.9rem;color:#555}
-    .muted{color:#666}
-    .grid{display:grid;grid-template-columns:1fr 340px;gap:12px}
-    .list{max-height:260px;overflow:auto;padding:8px;background:#fafafa;border-radius:8px}
-    table{width:100%;border-collapse:collapse}
-    table td,table th{padding:6px;border-bottom:1px solid #eee}
-    .actions{display:flex;gap:8px}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
-    footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
+    :root {
+      --primary: #007bff; /* azul principal */
+      --secondary: #6c757d; /* gris para botones secundarios y gastos */
+      --bg: #f4f4f9;
+      --card-bg: #ffffff;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #333;
+    }
+    .splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: black;
+      color: var(--primary);
+      font-size: 3rem;
+      letter-spacing: .5rem;
+      z-index: 30;
+    }
+    .sigra span {
+      opacity: 0;
+      animation: fadeInLetter 0.5s forwards;
+    }
+    .sigra span:nth-child(1) { animation-delay: 0.5s; }
+    .sigra span:nth-child(2) { animation-delay: 1.0s; }
+    .sigra span:nth-child(3) { animation-delay: 1.3s; }
+    .sigra span:nth-child(4) { animation-delay: 1.5s; }
+    .sigra span:nth-child(5) { animation-delay: 1.8s; }
+    @keyframes fadeInLetter {
+      from { opacity: 0; filter: blur(4px); }
+      to { opacity: 1; filter: blur(0); }
+    }
+    .center-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .card {
+      width: 100%;
+      max-width: 920px;
+      background: var(--card-bg);
+      padding: 1.25rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.12);
+    }
+    .hidden { display: none; }
+    h1,h2,h3 { margin: .25rem 0; }
+    .row { display: flex; gap: 12px; }
+    .col { flex: 1; }
+    input, select, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button.secondary { background: var(--secondary); }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .small { font-size: .9rem; color: #555; }
+    .muted { color: #666; }
+    .grid { display: grid; grid-template-columns: 1fr 340px; gap: 12px; }
+    .list { max-height: 260px; overflow: auto; padding: 8px; background: #fafafa; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    table td, table th { padding: 6px; border-bottom: 1px solid #eee; }
+    .actions { display: flex; gap: 8px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #eef4ff; color: var(--primary); font-weight: 600; }
+    footer { margin-top: 12px; text-align: center; color: #666; font-size: .85rem; }
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .2s;z-index:50}
-    .modal.show{visibility:visible;opacity:1}
-    .modal .content{background:var(--card-bg);padding:1rem;border-radius:10px;max-width:720px;max-height:80vh;overflow:auto}
-    .right{text-align:right}
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: all .2s; z-index: 50; }
+    .modal.show { visibility: visible; opacity: 1; }
+    .modal .content { background: var(--card-bg); padding: 1rem; border-radius: 10px; max-width: 720px; max-height: 80vh; overflow: auto; }
+    .right { text-align: right; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -283,10 +329,9 @@
                     <div>Otros: $${totales.otros.toFixed(2)}</div>`;
     }
 
-    // Renderizar gráfico actualizado
     function renderChart(){
       const ctx = document.getElementById('grafico').getContext('2d');
-      if(window.myChart) window.myChart.destroy(); // destruir gráfico previo
+      if(window.myChart) window.myChart.destroy();
       const arr = readJSON(CARRERAS_KEY).filter(x => x.email === localStorage.getItem('sigra_current')).slice(-10);
       const labels = arr.map(c => new Date(c.date).toLocaleDateString());
       const neto = arr.map(c => c.neto);
@@ -298,14 +343,13 @@
           labels,
           datasets: [
             { label: 'Neto', data: neto, backgroundColor: 'var(--primary)' },
-            { label: 'Gastos', data: gastos, backgroundColor: '#6c757d' }
+            { label: 'Gastos', data: gastos, backgroundColor: 'var(--secondary)' }
           ]
         },
         options: { responsive:true, plugins:{ legend:{position:'top'} } }
       });
     }
 
-    // Exportar PDF
     function exportPDF(){
       const { jsPDF } = window.jspdf;
       const carreras = readJSON(CARRERAS_KEY).filter(c => c.email === localStorage.getItem('sigra_current'));
