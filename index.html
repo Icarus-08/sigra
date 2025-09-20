@@ -102,27 +102,22 @@
         <div>
           <div style="margin-bottom:12px">
             <h3>Calcular Ganancia</h3>
-
             <div class="row">
               <input id="tarifa" placeholder="Tarifa (ganancia) $" />
               <input id="tiempo" placeholder="Tiempo (h)" />
             </div>
-
             <div class="row">
               <input id="pagoCarro" placeholder="Pago carro $" />
               <input id="gasolina" placeholder="Gasolina $" />
             </div>
-
             <div class="row">
               <input id="mantenimiento" placeholder="Mantenimiento $" />
               <input id="otros" placeholder="Otros gastos $" />
             </div>
-
             <div class="row">
               <button onclick="calcular()">Calcular</button>
               <button class="secondary" onclick="guardarCarrera()">Guardar Carrera</button>
             </div>
-
             <div id="resultado" class="list" style="margin-top:8px"></div>
           </div>
 
@@ -169,9 +164,8 @@
   <script>
     const USERS_KEY = 'sigra_users';
     const SESSIONS_KEY = 'sigra_sessions';
-    const CARRERAS_KEY='sigra_carreras';
+    const CARRERAS_KEY = 'sigra_carreras';
     const PRECIOS_COMBUSTIBLE = { g95:0.938, g90:0.896, diesel:0.845 };
-
     const sanitizeEmailKey = email => email.trim().toLowerCase();
 
     function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
@@ -289,14 +283,55 @@
                     <div>Otros: $${totales.otros.toFixed(2)}</div>`;
     }
 
+    // Renderizar gráfico actualizado
     function renderChart(){
-      const ctx=document.getElementById('grafico').getContext('2d');
-      const arr=readJSON(CARRERAS_KEY); const current=localStorage.getItem('sigra_current');
-      const data=arr.filter(x=>x.email===current).slice(-10);
-      const labels=data.map(d=>new Date(d.date).toLocaleDateString());
-      const neto=data.map(d=>d.neto);
-      const gastos=data.map(d=>d.gasolinaFija + d.gasolina + d.pagoCarro + d.mantenimiento + d.otros);
-      new Chart(ctx,{type:'bar',data:{labels, datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true,plugins:{legend:{position:'top'}}}});
+      const ctx = document.getElementById('grafico').getContext('2d');
+      if(window.myChart) window.myChart.destroy(); // destruir gráfico previo
+      const arr = readJSON(CARRERAS_KEY).filter(x => x.email === localStorage.getItem('sigra_current')).slice(-10);
+      const labels = arr.map(c => new Date(c.date).toLocaleDateString());
+      const neto = arr.map(c => c.neto);
+      const gastos = arr.map(c => c.gasolinaFija + c.gasolina + c.pagoCarro + c.mantenimiento + c.otros);
+
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Neto', data: neto, backgroundColor: 'var(--primary)' },
+            { label: 'Gastos', data: gastos, backgroundColor: '#6c757d' }
+          ]
+        },
+        options: { responsive:true, plugins:{ legend:{position:'top'} } }
+      });
+    }
+
+    // Exportar PDF
+    function exportPDF(){
+      const { jsPDF } = window.jspdf;
+      const carreras = readJSON(CARRERAS_KEY).filter(c => c.email === localStorage.getItem('sigra_current'));
+      if(!carreras.length){alert('No hay carreras para exportar'); return;}
+      
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text("Historial de Carreras - SIGRA", 14, 20);
+
+      const tableData = carreras.map(c => [
+        new Date(c.date).toLocaleString(),
+        `$${c.tarifa.toFixed(2)}`,
+        `$${(c.gasolinaFija+c.gasolina).toFixed(2)}`,
+        `$${c.pagoCarro.toFixed(2)}`,
+        `$${c.mantenimiento.toFixed(2)}`,
+        `$${c.otros.toFixed(2)}`,
+        `$${c.neto.toFixed(2)}`
+      ]);
+
+      doc.autoTable({
+        startY:30,
+        head:[['Fecha','Tarifa','Gasolina','Pago carro','Mantenimiento','Otros','Neto']],
+        body: tableData
+      });
+
+      doc.save('historial_SIGRA.pdf');
     }
 
     function showAppForUser(email){
@@ -318,3 +353,4 @@
   </script>
 </body>
 </html>
+
