@@ -152,16 +152,25 @@
 
           <!-- PRECIOS COMBUSTIBLE -->
           <div>
-            <h3>Precios de Combustible (por usuario)</h3>
-            <div class="row">
+            <h3>Precios de Combustible</h3>
+
+            <!-- Sección editable solo por admin -->
+            <div id="fuelInputs" class="row">
               <input id="price95" placeholder="Gasolina 95 $" />
               <input id="price90" placeholder="Gasolina 90 $" />
-            </div>
-            <div class="row">
               <input id="pricediesel" placeholder="Diésel $" />
-              <input id="btnSaveFuel" type="button" value="Guardar precio del día" onclick="saveFuelPrice()" />
+              <input
+                id="btnSaveFuel"
+                type="button"
+                value="Guardar precio del día"
+                onclick="saveFuelPrice()"
+              />
             </div>
-            <div style="margin-top:8px" class="small muted">Último precio guardado: <span id="lastFuel" class="pill">-</span></div>
+
+            <!-- Sección visible para todos -->
+            <div style="margin-top:8px" class="small muted">
+              Último precio guardado: <span id="lastFuel" class="pill">-</span>
+            </div>
 
             <h4 style="margin-top:8px">Historial de precios</h4>
             <div id="fuelList" class="list"></div>
@@ -196,26 +205,22 @@
   </div>
 
   <script>
-    // --- Utils ---
     const USERS_KEY = 'sigra_users';
     const SESSIONS_KEY = 'sigra_sessions';
+    const ADMIN_EMAIL = "hiroemiya1412@gmail.com";
     const sanitizeEmailKey = (email)=>email.trim().toLowerCase();
 
     function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
     function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
 
-    // Simple 'hash' for passwords (base64) - not secure but avoids plain text
     function hashPass(p){return btoa(p)}
 
-    // --- Auth UI ---
     function showRegister(){document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.remove('hidden')}
     function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
-
     function openTerms(e){e&&e.preventDefault();document.getElementById('termsModal').classList.add('show')}
     function acceptTerms(){document.getElementById('acceptTerms').checked=true;document.getElementById('termsModal').classList.remove('show')}
     function rejectTerms(){document.getElementById('acceptTerms').checked=false;document.getElementById('termsModal').classList.remove('show')}
 
-    // --- Accounts ---
     function createAccount(){
       const name=document.getElementById('regName').value.trim();
       const last=document.getElementById('regLast').value.trim();
@@ -244,177 +249,76 @@
       const users=readJSON(USERS_KEY);
       const u=users.find(x=>x.email===email);
       if(!u||u.password!==hashPass(pass)){alert('Correo o contraseña incorrectos');return}
-      // set current session
       localStorage.setItem('sigra_current',email);
       recordSession(email);
       showAppForUser(email);
     }
 
-    function recordSession(email){
-      const sessions=readJSON(SESSIONS_KEY);
-      sessions.push({email,date:new Date().toISOString()});
-      writeJSON(SESSIONS_KEY,sessions);
-    }
+    function doLogout(){localStorage.removeItem('sigra_current');location.reload()}
 
-    function doLogout(){localStorage.removeItem('sigra_current');document.getElementById('appWrap').style.display='none';document.getElementById('authWrap').style.display='flex';document.getElementById('loginCard').classList.remove('hidden');document.getElementById('splash').style.display='none';}
+    function recordSession(email){const arr=readJSON(SESSIONS_KEY);arr.push({email,date:new Date().toISOString()});writeJSON(SESSIONS_KEY,arr)}
 
-    // Show sessions modal
-    function openSessions(){const sessions=readJSON(SESSIONS_KEY).slice().reverse();const el=document.getElementById('sessionsList');el.innerHTML='';if(!sessions.length)el.innerHTML='<div class="small muted">No hay sesiones registradas</div>';
-      sessions.forEach(s=>{const d=new Date(s.date);const row=document.createElement('div');row.style.padding='6px 0';row.innerHTML=`<strong>${s.email}</strong> — <span class="small muted">${d.toLocaleString()}</span>`;el.appendChild(row)})
-      document.getElementById('sessionsModal').classList.add('show')}
+    function openSessions(){document.getElementById('sessionsModal').classList.add('show');renderSessions()}
     function closeSessions(){document.getElementById('sessionsModal').classList.remove('show')}
 
-    // --- App / Gestor ---
-    function showAppForUser(email){
-      document.getElementById('authWrap').style.display='none';
-      document.getElementById('appWrap').style.display='block';
-      document.getElementById('currentUserLabel').innerText=email;
-      loadHistorial();
-      loadTotals();
-      loadFuelPrices();
-      renderChart();
+    function renderSessions(){
+      const arr=readJSON(SESSIONS_KEY);const el=document.getElementById('sessionsList');el.innerHTML='';
+      if(!arr.length){el.innerHTML='<div class="small muted">No hay sesiones</div>';return}
+      arr.slice().reverse().forEach(s=>{const d=new Date(s.date);const row=document.createElement('div');row.innerText=`${s.email} — ${d.toLocaleString()}`;el.appendChild(row)})
     }
 
-    // Historial de carreras por usuario
-    function getHistKey(email){return `historial_${email}`}
-    function getFuelKey(email){return `fuel_${email}`}
-
-    let ultimoResultado=null;
-    let listaCarreras=[];
-
-    function calcular(){
-      const email=localStorage.getItem('sigra_current');
-      if(!email){alert('No estás logueado');return}
-      const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-      let gasolina=parseFloat(document.getElementById('gasolina').value||0);
-      const carro=parseFloat(document.getElementById('carro').value)||0;
-      const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-      const otros=parseFloat(document.getElementById('otros').value)||0;
-      const tiempo=parseFloat(document.getElementById('tiempo').value)||0;
-      // si gasolina vacío, tomar último precio y suponer consumo 1 unidad (usuario puede ajustar)
-      if(!gasolina){
-        const fuels=readJSON(getFuelKey(email));
-        if(fuels.length){const last=fuels[fuels.length-1];gasolina=last.g95||last.g90||last.diesel||0}
-      }
-      if(tarifa===0||tiempo===0){alert('Por favor ingresa al menos la ganancia y el tiempo en horas');return}
-      const totalGastos = gasolina + carro + mantenimiento + otros;
-      const neto = tarifa - totalGastos;
-      const resultadoEl = document.getElementById('resultado');
-      resultadoEl.innerHTML = `\n        <p>📌 Tarifa: $${tarifa.toFixed(2)}</p>\n        <p>⛽ Gasolina: $${gasolina.toFixed(2)}</p>\n        <p>🚗 Carro: $${carro.toFixed(2)}</p>\n        <p>🔧 Mantenimiento: $${mantenimiento.toFixed(2)}</p>\n        <p>🧾 Otros: $${otros.toFixed(2)}</p>\n        <p>✅ Ganancia neta: $${neto.toFixed(2)} en ${tiempo} h</p>\n      `;
-      ultimoResultado={tarifa,gasolina,carro,mantenimiento,otros,tiempo,neto,fecha:new Date().toISOString()};
-    }
+    // ------------------ CARRERAS ------------------
+    const CARRERAS_KEY='sigra_carreras';
+    function calcular(){const tarifa=parseFloat(document.getElementById('tarifa').value)||0;const tiempo=parseFloat(document.getElementById('tiempo').value)||0;const gasolina=parseFloat(document.getElementById('gasolina').value)||0;const carro=parseFloat(document.getElementById('carro').value)||0;const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;const otros=parseFloat(document.getElementById('otros').value)||0;const neto=(tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2)}
 
     function guardarCarrera(){
-      const email=localStorage.getItem('sigra_current');
-      if(!email){alert('No estás logueado');return}
-      if(!ultimoResultado){alert('Primero calcula una carrera antes de guardarla');return}
-      const key=getHistKey(email);
-      const historial=readJSON(key);
-      historial.push(ultimoResultado);
-      writeJSON(key,historial);
-      ultimoResultado=null;document.getElementById('resultado').innerHTML='Guardado ✅';
-      loadHistorial();loadTotals();renderChart();
-    }
-
-    function loadHistorial(){
-      const email=localStorage.getItem('sigra_current');
-      if(!email) return;
-      const key=getHistKey(email);
-      const historial=readJSON(key);
-      listaCarreras=historial.slice();
-      const el=document.getElementById('historialList');el.innerHTML='';
-      if(!historial.length){el.innerHTML='<div class="small muted">No hay carreras guardadas</div>'}
-      historial.slice().reverse().forEach((c,i)=>{
-        const d=new Date(c.fecha);
-        const div=document.createElement('div');div.style.padding='6px 0';
-        div.innerHTML=`<strong>${d.toLocaleString()}</strong> — Tarifa: $${c.tarifa.toFixed(2)} • Neto: $${c.neto.toFixed(2)}`;
-        el.appendChild(div);
-      })
-      // mostrar/ocultar boton PDF si hay datos
-      document.getElementById('btnPDF').style.display = historial.length? 'inline-block':'none';
-    }
-
-    function loadTotals(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;
-      const historial=readJSON(getHistKey(email));
-      const totalesEl=document.getElementById('totales');totalesEl.innerHTML='';
-      if(!historial.length){totalesEl.innerHTML='<div class="small muted">Sin datos</div>';return}
-      const totalTarifa=historial.reduce((s,c)=>s+c.tarifa,0);
-      const totalGas=historial.reduce((s,c)=>s+c.gasolina,0);
-      const totalCarro=historial.reduce((s,c)=>s+c.carro,0);
-      const totalMant=historial.reduce((s,c)=>s+c.mantenimiento,0);
-      const totalOtros=historial.reduce((s,c)=>s+c.otros,0);
-      const totalNeto=historial.reduce((s,c)=>s+c.neto,0);
-      totalesEl.innerHTML=`<p>📈 Ganancia total: $${totalTarifa.toFixed(2)}</p>
-        <p>⛽ Gasolina total: $${totalGas.toFixed(2)}</p>
-        <p>🚗 Carro: $${totalCarro.toFixed(2)}</p>
-        <p>🔧 Mantenimiento: $${totalMant.toFixed(2)}</p>
-        <p>🧾 Otros: $${totalOtros.toFixed(2)}</p>
-        <p>✅ Ganancia neta acumulada: $${totalNeto.toFixed(2)}</p>`;
-    }
-
-    // --- Fuel prices (per user) ---
-    function saveFuelPrice(){
       const email=localStorage.getItem('sigra_current');if(!email){alert('No estás logueado');return}
+      const tarifa=parseFloat(document.getElementById('tarifa').value)||0;const tiempo=parseFloat(document.getElementById('tiempo').value)||0;const gasolina=parseFloat(document.getElementById('gasolina').value)||0;const carro=parseFloat(document.getElementById('carro').value)||0;const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;const otros=parseFloat(document.getElementById('otros').value)||0;
+      const neto=(tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);const arr=readJSON(CARRERAS_KEY);arr.push({email,date:new Date().toISOString(),tarifa,tiempo,gasolina,carro,mantenimiento,otros,neto});writeJSON(CARRERAS_KEY,arr);loadHistorial();loadTotals();alert('Carrera guardada')}
+    function loadHistorial(){const arr=readJSON(CARRERAS_KEY);const el=document.getElementById('historialList');el.innerHTML='';const current=localStorage.getItem('sigra_current');arr.filter(x=>x.email===current).slice().reverse().forEach(c=>{const d=new Date(c.date);const row=document.createElement('div');row.innerText=`${d.toLocaleDateString()} — Neto: $${c.neto.toFixed(2)}`;el.appendChild(row)})}
+    function loadTotals(){const arr=readJSON(CARRERAS_KEY);const current=localStorage.getItem('sigra_current');const totales=arr.filter(x=>x.email===current).reduce((acc,v)=>{acc.neto+=v.neto;acc.gasolina+=v.gasolina;acc.carro+=v.carro;acc.mantenimiento+=v.mantenimiento;acc.otros+=v.otros;return acc},{neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0});const el=document.getElementById('totales');el.innerHTML=`<div>Neto: $${totales.neto.toFixed(2)}</div><div>Gasolina: $${totales.gasolina.toFixed(2)}</div><div>Carro: $${totales.carro.toFixed(2)}</div><div>Mantenimiento: $${totales.mantenimiento.toFixed(2)}</div><div>Otros: $${totales.otros.toFixed(2)}</div>`}
+
+    function renderChart(){
+      const ctx=document.getElementById('grafico').getContext('2d');
+      const arr=readJSON(CARRERAS_KEY);const current=localStorage.getItem('sigra_current');const data=arr.filter(x=>x.email===current).slice(-10);const labels=data.map(d=>new Date(d.date).toLocaleDateString());const neto=data.map(d=>d.neto);const gastos=data.map(d=>d.gasolina+d.carro+d.mantenimiento+d.otros);
+      new Chart(ctx,{type:'bar',data:{labels, datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true,plugins:{legend:{position:'top'}}}})
+    }
+
+    // ------------------ COMBUSTIBLE ------------------
+    const FUEL_KEY='fuel_global';
+    function saveFuelPrice(){
+      const email=localStorage.getItem('sigra_current');if(email!==ADMIN_EMAIL){alert('Solo el administrador puede guardar precios de combustible');return}
       const p95=parseFloat(document.getElementById('price95').value)||0;
       const p90=parseFloat(document.getElementById('price90').value)||0;
       const pd=parseFloat(document.getElementById('pricediesel').value)||0;
       if(!p95&&!p90&&!pd){alert('Ingresa al menos un precio');return}
-      const key=getFuelKey(email);
-      const arr=readJSON(key);
-      const item={fecha:new Date().toISOString(),g95:p95,g90:p90,diesel:pd};
-      arr.push(item);writeJSON(key,arr);
+      const arr=readJSON(FUEL_KEY);
+      arr.push({fecha:new Date().toISOString(),g95:p95,g90:p90,diesel:pd});
+      writeJSON(FUEL_KEY,arr);
       document.getElementById('price95').value='';document.getElementById('price90').value='';document.getElementById('pricediesel').value='';
-      loadFuelPrices();alert('Precio guardado');
+      loadFuelPrices();
+      alert('Precio guardado');
     }
 
     function loadFuelPrices(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;
-      const arr=readJSON(getFuelKey(email));
+      const arr=readJSON(FUEL_KEY);
       const el=document.getElementById('fuelList');el.innerHTML='';
       if(!arr.length){el.innerHTML='<div class="small muted">No hay precios guardados</div>';document.getElementById('lastFuel').innerText='-';return}
-      arr.slice().reverse().forEach(f=>{const d=new Date(f.fecha);const row=document.createElement('div');row.style.padding='6px 0';row.innerHTML=`<strong>${d.toLocaleDateString()}</strong> — 95: ${f.g95?('$'+f.g95):'-'} • 90: ${f.g90?('$'+f.g90):'-'} • Diésel: ${f.diesel?('$'+f.diesel):'-'}`;el.appendChild(row)})
-      const last=arr[arr.length-1];document.getElementById('lastFuel').innerText=`95:${last.g95||'-'} 90:${last.g90||'-'} D:${last.diesel||'-'}`;
+      arr.slice().reverse().forEach(f=>{const d=new Date(f.fecha);const row=document.createElement('div');row.style.padding='6px 0';row.innerHTML=`<strong>${d.toLocaleDateString()}</strong> — 95: ${f.g95?`$${f.g95}`:'-'} • 90: ${f.g90?`$${f.g90}`:'-'} • Diésel: ${f.diesel?`$${f.diesel}`:'-'}`;el.appendChild(row)})
+      const last=arr[arr.length-1];document.getElementById('lastFuel').innerText=`95:${last.g95||'-'} 90:${last.g90||'-'} D:${last.diesel||'-'}`
     }
 
-    // --- PDF Export ---
-    function exportPDF(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;const historial=readJSON(getHistKey(email));
-      const { jsPDF } = window.jspdf;const doc=new jsPDF();
-      doc.setFontSize(16);doc.text('Informe de Conductor - SIGRA',14,18);
-      doc.setFontSize(10);doc.text('Usuario: '+email,14,24);
-      const rows = historial.map((c,i)=>[i+1,new Date(c.fecha).toLocaleString(),c.tarifa.toFixed(2),c.gasolina.toFixed(2),c.carro.toFixed(2),c.mantenimiento.toFixed(2),c.otros.toFixed(2),c.neto.toFixed(2)]);
-      doc.autoTable({startY:30,head:[['#','Fecha','Tarifa','Gas','Carro','Mant','Otros','Neto']],body:rows,styles:{fontSize:8}});
-      doc.save('informe_SIGRA_'+email.replace(/@/g,'_')+'.pdf');
+    function toggleFuelInputs(email){if(email!==ADMIN_EMAIL){const el=document.getElementById('fuelInputs');if(el)el.style.display='none'}}
+
+    function showAppForUser(email){
+      document.getElementById('authWrap').style.display='none';
+      document.getElementById('appWrap').style.display='block';
+      document.getElementById('currentUserLabel').innerText=email;
+      loadHistorial();loadTotals();loadFuelPrices();toggleFuelInputs(email);renderChart();
     }
 
-    // --- Chart ---
-    let chartInstance=null;
-    function renderChart(){
-      const email=localStorage.getItem('sigra_current');if(!email)return;
-      const historial=readJSON(getHistKey(email));
-      const ctx=document.getElementById('grafico').getContext('2d');
-      const labels=historial.slice(-10).map(c=>new Date(c.fecha).toLocaleDateString());
-      const neto=historial.slice(-10).map(c=>c.neto);
-      const gas=historial.slice(-10).map(c=>c.gasolina);
-      if(chartInstance)chartInstance.destroy();
-      chartInstance=new Chart(ctx,{type:'bar',data:{labels, datasets:[{label:'Ganancia Neta',data:neto,backgroundColor:'rgba(46,204,113,0.6)'},{label:'Gasolina',data:gas,backgroundColor:'rgba(52,152,219,0.6)'}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
-    }
-
-    // --- Init ---
-    function init(){
-      updateUserCount();
-      // hide splash after animation
-      setTimeout(()=>{document.getElementById('splash').style.display='none';document.body.style.background=varOr('--bg','#f4f4f9')},5500);
-      // If already logged in, show app
-      const current = localStorage.getItem('sigra_current');
-      if(current){showAppForUser(current)}
-    }
-    function varOr(name,def){try{return getComputedStyle(document.documentElement).getPropertyValue(name)||def}catch(e){return def}}
-
-    // small helpers
-    window.addEventListener('load',()=>{init();document.getElementById('splash').style.animation='fadeOut 1s ease forwards';});
-
+    // SPLASH
+    window.addEventListener('load',()=>{setTimeout(()=>{document.getElementById('splash').style.opacity=0;setTimeout(()=>{document.getElementById('splash').style.display='none'},600)},2000);updateUserCount()})
   </script>
 </body>
 </html>
