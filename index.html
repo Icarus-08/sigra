@@ -177,7 +177,7 @@ footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
 <script>
   // ------------------ FIREBASE ------------------
   const firebaseConfig = {
-    apiKey: "AIzaSyCl55k6nUohSTnkc01ZtlIrgy7qIpI",
+    apiKey: "TU_API_KEY_AQUI",
     authDomain: "sigra-b1d1b.firebaseapp.com",
     projectId: "sigra-b1d1b",
     storageBucket: "sigra-b1d1b.appspot.com",
@@ -204,7 +204,7 @@ footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
     try{
       const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
       const uid = userCredential.user.uid;
-      const isAdmin = (email === ADMIN_EMAIL);
+      const isAdmin = (email.toLowerCase() === ADMIN_EMAIL);
       await db.collection('users').doc(uid).set({name,last,email,isAdmin});
       alert('Cuenta creada correctamente');
       showLogin();
@@ -266,7 +266,6 @@ footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
     });
   }
 
-  // ------------------ CARRERAS ------------------
   async function guardarCarrera(){
     const user = auth.currentUser;
     if(!user) return alert('Debes iniciar sesión');
@@ -356,3 +355,4 @@ footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
 </script>
 </body>
 </html>
+
