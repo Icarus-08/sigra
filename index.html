@@ -42,7 +42,10 @@
 
     <div id="registerView" class="hidden">
       <h2>Crear Cuenta</h2>
-      <input id="regName" placeholder="Nombre" />
+      <div class="row">
+        <input id="regName" placeholder="Nombre" />
+        <input id="regLast" placeholder="Apellido" />
+      </div>
       <input id="regEmail" type="email" placeholder="Correo" />
       <input id="regPass" type="password" placeholder="Contraseña" />
       <input id="regPass2" type="password" placeholder="Confirmar Contraseña" />
@@ -118,17 +121,20 @@
   function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
 
   async function createAccount(){
+    const name = document.getElementById('regName').value.trim();
+    const last = document.getElementById('regLast').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const pass = document.getElementById('regPass').value;
     const pass2 = document.getElementById('regPass2').value;
-    const name = document.getElementById('regName').value.trim();
-    if(!name||!email||!pass){alert('Completa todos los campos'); return;}
-    if(pass!==pass2){alert('Contraseñas no coinciden'); return;}
+    if(!name || !last || !email || !pass){ alert('Completa todos los campos'); return; }
+    if(pass!==pass2){ alert('Contraseñas no coinciden'); return; }
+
     const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
     const uid = userCredential.user.uid;
-    const isAdmin = (email === "hiroemiya1412@gmail.com"); 
-    await db.collection('users').doc(uid).set({name,email,isAdmin});
-    alert('Cuenta creada');
+    const isAdmin = (email === "hiroemiya1412@gmail.com");
+
+    await db.collection('users').doc(uid).set({name,last,email,isAdmin});
+    alert('Cuenta creada correctamente');
     showLogin();
   }
 
@@ -145,12 +151,11 @@
   async function showAppForUser(uid,email){
     document.getElementById('authWrap').style.display='none';
     document.getElementById('appWrap').style.display='block';
-    document.getElementById('currentUserLabel').innerText = email;
-
     const userDoc = await db.collection('users').doc(uid).get();
-    const isAdmin = userDoc.data().isAdmin;
+    const data = userDoc.data();
+    document.getElementById('currentUserLabel').innerText = `${data.name} ${data.last}`;
 
-    // Solo ocultar inputs de admin
+    const isAdmin = data.isAdmin;
     if(!isAdmin){document.getElementById('fuelInputs').querySelectorAll('input, button').forEach(el=>el.style.display='none');}
 
     await loadHistorial();
@@ -188,7 +193,6 @@
     document.getElementById('lastFuel').innerText = `95:${last.g95||'-'} 90:${last.g90||'-'} D:${last.diesel||'-'}`;
   }
 
-  // Carreras
   async function guardarCarrera(){
     const uid = auth.currentUser.uid;
     const email = auth.currentUser.email;
@@ -235,7 +239,7 @@
     const labels = data.map(d=>new Date(d.data().fecha).toLocaleDateString()).reverse();
     const neto = data.map(d=>d.data().neto).reverse();
     const gastos = data.map(d=>d.data().gasolina+d.data().carro+d.data().mantenimiento+d.data().otros).reverse();
-    new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true,plugins:{legend:{position:'top'}}}});
+    new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true}});
   }
 </script>
 </body>
