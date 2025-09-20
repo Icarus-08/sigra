@@ -5,44 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIGRA - Gestor de Conductor 🚖</title>
   <style>
+    /* Colores azul y gris */
     :root {
-      --primary: #007bff; /* azul principal */
-      --secondary: #6c757d; /* gris para botones secundarios y gastos */
-      --bg: #f4f4f9;
+      --primary: #007bff; /* azul */
+      --secondary: #6c757d; /* gris */
+      --bg: #f0f2f5;
       --card-bg: #ffffff;
+      --text-muted: #555;
+      --text-dark: #333;
     }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', Roboto, Arial, sans-serif;
       background: var(--bg);
-      color: #333;
+      color: var(--text-dark);
     }
+
+    /* Animación splash */
     .splash {
       position: fixed;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: black;
+      background: #000;
       color: var(--primary);
       font-size: 3rem;
-      letter-spacing: .5rem;
+      letter-spacing: 0.5rem;
       z-index: 30;
     }
+
     .sigra span {
       opacity: 0;
       animation: fadeInLetter 0.5s forwards;
     }
+
     .sigra span:nth-child(1) { animation-delay: 0.5s; }
     .sigra span:nth-child(2) { animation-delay: 1.0s; }
     .sigra span:nth-child(3) { animation-delay: 1.3s; }
     .sigra span:nth-child(4) { animation-delay: 1.5s; }
     .sigra span:nth-child(5) { animation-delay: 1.8s; }
+
     @keyframes fadeInLetter {
       from { opacity: 0; filter: blur(4px); }
       to { opacity: 1; filter: blur(0); }
     }
-    .center-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+
+    .center-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
     .card {
       width: 100%;
       max-width: 920px;
@@ -51,10 +68,13 @@
       border-radius: 12px;
       box-shadow: 0 6px 20px rgba(0,0,0,.12);
     }
+
     .hidden { display: none; }
-    h1,h2,h3 { margin: .25rem 0; }
+    h1, h2, h3 { margin: 0.25rem 0; }
+
     .row { display: flex; gap: 12px; }
     .col { flex: 1; }
+
     input, select, button, textarea {
       width: 100%;
       padding: 10px;
@@ -63,29 +83,85 @@
       border: 1px solid #ccc;
       font-size: 15px;
     }
+
     button {
       background: var(--primary);
       color: #fff;
       border: none;
       cursor: pointer;
     }
-    button.secondary { background: var(--secondary); }
-    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .small { font-size: .9rem; color: #555; }
-    .muted { color: #666; }
+
+    button.secondary {
+      background: var(--secondary);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .small { font-size: 0.9rem; color: var(--text-muted); }
+    .muted { color: var(--text-muted); }
+
     .grid { display: grid; grid-template-columns: 1fr 340px; gap: 12px; }
-    .list { max-height: 260px; overflow: auto; padding: 8px; background: #fafafa; border-radius: 8px; }
+    .list {
+      max-height: 260px;
+      overflow: auto;
+      padding: 8px;
+      background: #e9ecef;
+      border-radius: 8px;
+    }
+
     table { width: 100%; border-collapse: collapse; }
-    table td, table th { padding: 6px; border-bottom: 1px solid #eee; }
+    table td, table th { padding: 6px; border-bottom: 1px solid #ddd; }
+
     .actions { display: flex; gap: 8px; }
-    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #eef4ff; color: var(--primary); font-weight: 600; }
-    footer { margin-top: 12px; text-align: center; color: #666; font-size: .85rem; }
-    @media(max-width:900px){.grid{grid-template-columns:1fr}}
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: all .2s; z-index: 50; }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e7f1ff;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    footer {
+      margin-top: 12px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    @media(max-width:900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: all 0.2s;
+      z-index: 50;
+    }
+
     .modal.show { visibility: visible; opacity: 1; }
-    .modal .content { background: var(--card-bg); padding: 1rem; border-radius: 10px; max-width: 720px; max-height: 80vh; overflow: auto; }
-    .right { text-align: right; }
-  </style>
+    .modal .content {
+      background: var(--card-bg);
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 720px;
+      max-height: 80vh;
+      overflow: auto;
+    }
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -397,4 +473,5 @@
   </script>
 </body>
 </html>
+
 
