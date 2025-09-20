@@ -1,184 +1,23 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-ES">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIGRA - Gestor de Conductor 🚖</title>
-<style>
-:root{--primary:#007bff;--bg:#f4f4f9;--card-bg:#fff}
-body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:black;color:#333}
-/* Splash */
-.splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:black;color:var(--primary);font-size:3rem;letter-spacing:.5rem;z-index:30}
-.sigra span{opacity:0;animation:fadeInLetter 0.5s forwards}
-.sigra span:nth-child(1){animation-delay:0.5s}
-.sigra span:nth-child(2){animation-delay:1.0s}
-.sigra span:nth-child(3){animation-delay:1.3s}
-.sigra span:nth-child(4){animation-delay:1.5s}
-.sigra span:nth-child(5){animation-delay:1.8s}
-@keyframes fadeInLetter{from{opacity:0;filter:blur(4px)}to{opacity:1;filter:blur(0)}}
-@keyframes fadeOut{to{opacity:0;visibility:hidden}}
-.center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
-.card{width:100%;max-width:920px;background:var(--card-bg);padding:1.25rem;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
-.hidden{display:none}
-h1,h2,h3{margin:.25rem 0}
-.row{display:flex;gap:12px} .col{flex:1}
-input,select,button,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;font-size:15px}
-button{background:var(--primary);color:#fff;border:none;cursor:pointer}
-button.secondary{background:#6c757d}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.small{font-size:.9rem;color:#555}
-.muted{color:#666}
-.grid{display:grid;grid-template-columns:1fr 340px;gap:12px}
-.list{max-height:260px;overflow:auto;padding:8px;background:#fafafa;border-radius:8px}
-.actions{display:flex;gap:8px}
-.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--primary);font-weight:600}
-footer{margin-top:12px;text-align:center;color:#666;font-size:.85rem}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:all .2s;z-index:50}
-.modal.show{visibility:visible;opacity:1}
-.modal .content{background:var(--card-bg);padding:1rem;border-radius:10px;max-width:720px;max-height:80vh;overflow:auto}
-.right{text-align:right}
-</style>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
-<!-- Librerías adicionales -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Carreras</title>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.6.1/firebase-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.6.1/firebase-auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.6.1/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* Agrega aquí tus estilos CSS */
+  </style>
 </head>
 <body>
+  <!-- Contenido de tu aplicación aquí -->
 
-<!-- SPLASH -->
-<div class="splash" id="splash">
-  <div class="sigra"><span>S</span>.<span>I</span>.<span>G</span>.<span>R</span>.<span>A</span></div>
-</div>
-
-<!-- LOGIN / REGISTER -->
-<div class="center-wrap" id="authWrap">
-  <div class="card" id="loginCard">
-    <h1 style="color:var(--primary)">SIGRA</h1>
-    <div id="loginView">
-      <input id="loginEmail" type="email" placeholder="Correo" />
-      <input id="loginPass" type="password" placeholder="Contraseña" />
-      <div class="row">
-        <button onclick="doLogin()">Entrar</button>
-        <button class="secondary" onclick="showRegister()">Crear Cuenta</button>
-      </div>
-      <p class="small muted">Al continuar aceptas nuestros <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></p>
-    </div>
-    <div id="registerView" class="hidden">
-      <h2>Crear Cuenta</h2>
-      <div class="row">
-        <input id="regName" placeholder="Nombre" />
-        <input id="regLast" placeholder="Apellido" />
-      </div>
-      <input id="regEmail" type="email" placeholder="Correo" />
-      <input id="regPass" type="password" placeholder="Contraseña" />
-      <input id="regPass2" type="password" placeholder="Confirmar Contraseña" />
-      <div style="margin:8px 0" class="terms-checkbox">
-        <input id="acceptTerms" type="checkbox" /> 
-        <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
-      </div>
-      <div class="row">
-        <button onclick="createAccount()">Crear</button>
-        <button class="secondary" onclick="showLogin()">Volver</button>
-      </div>
-    </div>
-    <div style="margin-top:10px" class="small muted">Usuarios registrados: <span id="userCount">0</span></div>
-  </div>
-</div>
-
-<!-- MODAL TERMINOS -->
-<div class="modal" id="termsModal">
-  <div class="content">
-    <h2 style="color:var(--primary);text-align:center">Términos y Condiciones</h2>
-    <p><b>Confidencialidad de la Información</b><br>Todos los datos suministrados se almacenan en Firebase de manera segura. Esta aplicación es para uso local/educativo.</p>
-    <div style="text-align:center;margin-top:12px"><button onclick="acceptTerms()">Aceptar</button> <button class="secondary" onclick="rejectTerms()">Rechazar</button></div>
-  </div>
-</div>
-
-<!-- APP -->
-<div style="display:none;padding:18px" id="appWrap">
-  <div class="card">
-    <div class="topbar">
-      <div>
-        <h2 style="margin:0">Gestor de Conductor 🚖</h2>
-        <div class="small">Usuario: <span id="currentUserLabel" class="pill">-</span></div>
-      </div>
-      <div class="actions">
-        <button class="secondary" onclick="doLogout()">Cerrar Sesión</button>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div>
-        <!-- CALCULO CARRERA -->
-        <div style="margin-bottom:12px">
-          <h3>Calcular Ganancia</h3>
-          <div class="row">
-            <input id="tarifa" placeholder="Tarifa (ganancia) $" />
-            <input id="tiempo" placeholder="Tiempo (h)" />
-          </div>
-          <div class="row">
-            <input id="gasolina" placeholder="Gasolina $ (usar último si vacío)" />
-            <input id="carro" placeholder="Gastos carro $" />
-          </div>
-          <div class="row">
-            <input id="mantenimiento" placeholder="Mantenimiento $" />
-            <input id="otros" placeholder="Otros gastos $" />
-          </div>
-          <div class="row">
-            <button onclick="calcular()">Calcular</button>
-            <button class="secondary" onclick="guardarCarrera()">Guardar Carrera</button>
-          </div>
-          <div id="resultado" class="list" style="margin-top:8px"></div>
-        </div>
-
-        <!-- HISTORIAL CARRERAS -->
-        <div style="margin-bottom:12px">
-          <h3>Historial de Carreras</h3>
-          <div id="historialList" class="list"></div>
-        </div>
-
-        <!-- PRECIOS COMBUSTIBLE -->
-        <div>
-          <h3>Precios de Combustible</h3>
-          <div id="fuelInputs" class="row">
-            <input id="price95" placeholder="Gasolina 95 $" />
-            <input id="price90" placeholder="Gasolina 90 $" />
-            <input id="pricediesel" placeholder="Diésel $" />
-            <input type="button" value="Guardar precio del día" onclick="saveFuelPrice()" />
-          </div>
-          <div style="margin-top:8px" class="small muted">
-            Último precio guardado: <span id="lastFuel" class="pill">-</span>
-          </div>
-          <h4 style="margin-top:8px">Historial de precios</h4>
-          <div id="fuelList" class="list"></div>
-        </div>
-      </div>
-
-      <div>
-        <div style="margin-bottom:12px">
-          <h3>Totales acumulados</h3>
-          <div id="totales" class="list"></div>
-        </div>
-        <div>
-          <h3>Gráfico (gastos vs neto)</h3>
-          <canvas id="grafico" style="max-width:100%;height:240px;background:#fff;padding:8px;border-radius:8px"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <footer>SIGRA • Firebase • Desarrollo local</footer>
-  </div>
-</div>
-
-<script>
-/* Firebase config */
+  <script>
+    // Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCl55k6nUohSTnkcJvzc01ZtlIrgy7qIpI",
   authDomain: "sigra-b1d1b.firebaseapp.com",
@@ -187,158 +26,191 @@ const firebaseConfig = {
   messagingSenderId: "sigra-b1d1b.firebasestorage.app",
   appId: "1:171804390742:web:d4f73b2ce921fd8bc252f7"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const ADMIN_EMAIL = "hiroemiya1412@gmail.com";
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const ADMIN_EMAIL = "hiroemiya1412@gmail.com";
 
-/* SPLASH */
-window.addEventListener('load',()=>{
-  setTimeout(()=>{
-    document.getElementById('splash').style.opacity=0;
-    setTimeout(()=>{document.getElementById('splash').style.display='none'},600)
-  },2000);
-});
+    // Función para guardar precios de combustible
+    async function saveFuelPrice() {
+      const user = auth.currentUser;
+      if (!user || user.email !== ADMIN_EMAIL) {
+        alert('Solo el administrador puede guardar precios');
+        return;
+      }
+      const p95 = parseFloat(document.getElementById('price95').value) || 0;
+      const p90 = parseFloat(document.getElementById('price90').value) || 0;
+      const pd = parseFloat(document.getElementById('pricediesel').value) || 0;
+      if (!p95 && !p90 && !pd) {
+        alert('Ingresa algún valor');
+        return;
+      }
+      await db.collection('fuel_prices').add({ p95, p90, pd, date: new Date().toISOString() });
+      document.getElementById('price95').value = '';
+      document.getElementById('price90').value = '';
+      document.getElementById('pricediesel').value = '';
+      loadFuelPrices();
+      alert('Precio guardado');
+    }
 
-/* LOGIN / REGISTER */
-function showRegister(){document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.remove('hidden')}
-function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
-function openTerms(e){e.preventDefault();document.getElementById('termsModal').classList.add('show')}
-function acceptTerms(){document.getElementById('acceptTerms').checked=true;document.getElementById('termsModal').classList.remove('show')}
-function rejectTerms(){document.getElementById('acceptTerms').checked=false;document.getElementById('termsModal').classList.remove('show')}
+    // Función para cargar los precios de combustible
+    async function loadFuelPrices() {
+      const snapshot = await db.collection('fuel_prices').orderBy('date', 'desc').limit(10).get();
+      const el = document.getElementById('fuelList');
+      el.innerHTML = '';
+      if (snapshot.empty) {
+        document.getElementById('lastFuel').innerText = '-';
+        return;
+      }
+      snapshot.forEach((doc, i) => {
+        const f = doc.data();
+        const d = new Date(f.date);
+        const row = document.createElement('div');
+        row.innerText = `${d.toLocaleDateString()} — 95:$${f.p95} • 90:$${f.p90} • D:$${f.pd}`;
+        el.appendChild(row);
+        if (i === 0) {
+          document.getElementById('lastFuel').innerText = `95:${f.p95} 90:${f.p90} D:${f.pd}`;
+        }
+      });
+    }
 
-/* REGISTRO */
-async function createAccount(){
-  const name=document.getElementById('regName').value.trim();
-  const last=document.getElementById('regLast').value.trim();
-  const email=document.getElementById('regEmail').value.trim();
-  const pass=document.getElementById('regPass').value;
-  const pass2=document.getElementById('regPass2').value;
-  const accepted=document.getElementById('acceptTerms').checked;
-  if(!name||!last||!email||!pass){alert('Completa todos los campos');return}
-  if(pass!==pass2){alert('Las contraseñas no coinciden');return}
-  if(!accepted){alert('Debes aceptar los términos');return}
-  try{
-    const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-    const uid = userCredential.user.uid;
-    await db.collection('users').doc(uid).set({name,last,email,isAdmin:email===ADMIN_EMAIL,created:new Date().toISOString()});
-    alert('Cuenta creada. Ya puedes iniciar sesión.');
-    showLogin();
-  }catch(e){alert('Error: '+e.message);}
-}
+    // Función para calcular la ganancia estimada
+    function calcular() {
+      const tarifa = parseFloat(document.getElementById('tarifa').value) || 0;
+      const tiempo = parseFloat(document.getElementById('tiempo').value) || 0;
+      const gasolina = parseFloat(document.getElementById('gasolina').value) || 0;
+      const carro = parseFloat(document.getElementById('carro').value) || 0;
+      const mantenimiento = parseFloat(document.getElementById('mantenimiento').value) || 0;
+      const otros = parseFloat(document.getElementById('otros').value) || 0;
+      const neto = (tarifa * tiempo) - (gasolina + carro + mantenimiento + otros);
+      document.getElementById('resultado').innerText = 'Ganancia estimada: $' + neto.toFixed(2);
+    }
 
-/* LOGIN */
-async function doLogin(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const pass=document.getElementById('loginPass').value;
-  try{
-    const userCredential = await auth.signInWithEmailAndPassword(email, pass);
-    const uid = userCredential.user.uid;
-    showAppForUser(uid);
-  }catch(e){alert('Correo o contraseña incorrectos');}
-}
+    // Función para renderizar el gráfico
+    async function renderChart() {
+      const ctx = document.getElementById('grafico').getContext('2d');
+      const user = auth.currentUser;
+      if (!user) return;
+      const snapshot = await db.collection('carreras').where('uid', '==', user.uid).orderBy('date', 'desc').limit(10).get();
+      const labels = [];
+      const neto = [];
+      const gastos = [];
+      snapshot.docs.reverse().forEach(doc => {
+        const c = doc.data();
+        labels.push(new Date(c.date).toLocaleDateString());
+        neto.push(c.neto);
+        gastos.push(c.gasolina + c.carro + c.mantenimiento + c.otros);
+      });
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Neto', data: neto, backgroundColor: 'var(--primary)' },
+            { label: 'Gastos', data: gastos, backgroundColor: '#6c757d' }
+          ]
+        },
+        options: { responsive: true }
+      });
+    }
 
-/* LOGOUT */
-function doLogout(){auth.signOut();location.reload()}
+    // Función para exportar los datos a PDF
+    async function exportPDF() {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snapshot = await db.collection('carreras').where('uid', '==', user.uid).orderBy('date', 'desc').get();
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const rows = snapshot.docs.map(doc => {
+        const c = doc.data();
+        return [new Date(c.date).toLocaleDateString(), c.tarifa, c.tiempo, c.gasolina, c.carro, c.mantenimiento, c.otros, c.neto];
+      });
+      doc.autoTable({ head: [['Fecha', 'Tarifa', 'Tiempo', 'Gasolina', 'Carro', 'Mantenimiento', 'Otros', 'Neto']], body: rows });
+      doc.save('historial.pdf');
+    }
 
-/* MOSTRAR APP */
-async function showAppForUser(uid){
-  document.getElementById('authWrap').style.display='none';
-  document.getElementById('appWrap').style.display='block';
-  const doc = await db.collection('users').doc(uid).get();
-  const data = doc.data();
-  document.getElementById('currentUserLabel').innerText = data.name+" "+data.last;
-  if(!data.isAdmin){document.getElementById('fuelInputs').style.display='none'}
-  loadFuelPrices();
-  loadHistorial();
-  loadTotals();
-  renderChart();
-}
+    // Función para cargar el historial de carreras
+    async function loadHistorial() {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snapshot = await db.collection('carreras').where('uid', '==', user.uid).orderBy('date', 'desc').get();
+      const el = document.getElementById('historialList');
+      el.innerHTML = '';
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        const d = new Date(c.date);
+        const row = document.createElement('div');
+        row.innerText = `${d.toLocaleDateString()} — Neto: $${c.neto.toFixed(2)}`;
+        el.appendChild(row);
+      });
+    }
 
-/* CARRERAS */
-async function guardarCarrera(){
-  const user = auth.currentUser;
-  if(!user){alert('Debes iniciar sesión');return}
-  const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const tiempo=parseFloat(document.getElementById('tiempo').value)||0;
-  const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
-  const carro=parseFloat(document.getElementById('carro').value)||0;
-  const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-  const otros=parseFloat(document.getElementById('otros').value)||0;
-  const neto=(tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);
-  await db.collection('carreras').add({uid:user.uid,email:user.email,tarifa,tiempo,gasolina,carro,mantenimiento,otros,neto,date:new Date().toISOString()});
-  alert('Carrera guardada');
-  loadHistorial();
-  loadTotals();
-  renderChart();
-}
+    // Función para guardar una nueva carrera
+    async function guardarCarrera() {
+      const user = auth.currentUser;
+      if (!user) {
+        alert('Debes iniciar sesión');
+        return;
+      }
+      const tarifa = parseFloat(document.getElementById('tarifa').value) || 0;
+      const tiempo = parseFloat(document.getElementById('tiempo').value) || 0;
+      const gasolina = parseFloat(document.getElementById('gasolina').value) || 0;
+      const carro = parseFloat(document.getElementById('carro').value) || 0;
+      const mantenimiento = parseFloat(document.getElementById('mantenimiento').value) || 0;
+      const otros = parseFloat(document.getElementById('otros').value) || 0;
+      const neto = (tarifa * tiempo) - (gasolina + carro + mantenimiento + otros);
+      await db.collection('carreras').add({
+        uid: user.uid,
+        email: user.email,
+        tarifa,
+        tiempo,
+        gasolina,
+        carro,
+        mantenimiento,
+        otros,
+        neto,
+        date: new Date().toISOString()
+      });
+      alert('Carrera guardada');
+      loadHistorial();
+      renderChart();
+    }
 
-/* HISTORIAL */
-async function loadHistorial(){
-  const user = auth.currentUser;
-  if(!user)return;
-  const snapshot = await db.collection('carreras').where('uid','==',user.uid).orderBy('date','desc').get();
-  const el = document.getElementById('historialList'); el.innerHTML='';
-  snapshot.forEach(doc=>{const c=doc.data(); const d=new Date(c.date); const row=document.createElement('div'); row.innerText=`${d.toLocaleDateString()} — Neto: $${c.neto.toFixed(2)}`; el.appendChild(row)})
-}
+    // Función para iniciar sesión
+    async function doLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, pass);
+        const uid = userCredential.user.uid;
+        showAppForUser(uid);
+      } catch (e) {
+        alert('Correo o contraseña incorrectos');
+      }
+    }
 
-/* TOTALES */
-async function loadTotals(){
-  const user = auth.currentUser;
-  if(!user)return;
-  const snapshot = await db.collection('carreras').where('uid','==',user.uid).get();
-  let totals={neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0};
-  snapshot.forEach(doc=>{const c=doc.data(); totals.neto+=c.neto; totals.gasolina+=c.gasolina; totals.carro+=c.carro; totals.mantenimiento+=c.mantenimiento; totals.otros+=c.otros});
-  const el = document.getElementById('totales');
-  el.innerHTML=`<div>Neto: $${totals.neto.toFixed(2)}</div><div>Gasolina: $${totals.gasolina.toFixed(2)}</div><div>Carro: $${totals.carro.toFixed(2)}</div><div>Mantenimiento: $${totals.mantenimiento.toFixed(2)}</div><div>Otros: $${totals.otros.toFixed(2)}</div>`;
-}
+    // Función para mostrar la aplicación para un usuario
+    async function showAppForUser(uid) {
+      document.getElementById('authWrap').style.display = 'none';
+      document.getElementById('appWrap').style.display = 'block';
+      const doc = await db.collection('users').doc(uid).get();
+      const data = doc.data();
+      document.getElementById('currentUserLabel').innerText = data.name + " " + data.last;
+      if (!data.isAdmin) {
+        document.getElementById('fuelInputs').style.display = 'none';
+      }
+      loadFuelPrices();
+      loadHistorial();
+      renderChart();
+    }
 
-/* COMBUSTIBLE */
-async function saveFuelPrice(){
-  const user = auth.currentUser;
-  if(!user)return;
-  if(user.email!==ADMIN_EMAIL){alert('Solo el administrador puede guardar precios'); return;}
-  const p95=parseFloat(document.getElementById('price95').value)||0;
-  const p90=parseFloat(document.getElementById('price90').value)||0;
-  const pd=parseFloat(document.getElementById('pricediesel').value)||0;
-  await db.collection('fuel_prices').add({p95,p90,pd,date:new Date().toISOString()});
-  document.getElementById('price95').value='';document.getElementById('price90').value='';document.getElementById('pricediesel').value='';
-  loadFuelPrices();
-  alert('Precio guardado');
-}
-
-async function loadFuelPrices(){
-  const snapshot = await db.collection('fuel_prices').orderBy('date','desc').limit(10).get();
-  const el = document.getElementById('fuelList'); el.innerHTML='';
-  if(snapshot.empty){document.getElementById('lastFuel').innerText='-'; return;}
-  let last=null;
-  snapshot.forEach(doc=>{const f=doc.data(); const d=new Date(f.date); const row=document.createElement('div'); row.innerText=`${d.toLocaleDateString()} — 95: $${f.p95} • 90: $${f.p90} • D: $${f.pd}`; el.appendChild(row); if(!last)last=f;})
-  if(last) document.getElementById('lastFuel').innerText=`95:${last.p95} 90:${last.p90} D:${last.pd}`;
-}
-
-/* CALCULO */
-function calcular(){
-  const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const tiempo=parseFloat(document.getElementById('tiempo').value)||0;
-  const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
-  const carro=parseFloat(document.getElementById('carro').value)||0;
-  const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-  const otros=parseFloat(document.getElementById('otros').value)||0;
-  const neto=(tarifa*tiempo)-(gasolina+carro+mantenimiento+otros);
-  document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
-}
-
-/* GRAFICO */
-async function renderChart(){
-  const ctx=document.getElementById('grafico').getContext('2d');
-  const user = auth.currentUser;
-  if(!user)return;
-  const snapshot = await db.collection('carreras').where('uid','==',user.uid).orderBy('date','desc').limit(10).get();
-  const labels=[]; const neto=[]; const gastos=[];
-  snapshot.docs.reverse().forEach(doc=>{const c=doc.data(); labels.push(new Date(c.date).toLocaleDateString()); neto.push(c.neto); gastos.push(c.gasolina+c.carro+c.mantenimiento+c.otros)});
-  new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true}});
-}
-</script>
+    // Función para cerrar sesión
+    function doLogout() {
+      auth.signOut();
+      location.reload();
+    }
+  </script>
 </body>
 </html>
+
 
