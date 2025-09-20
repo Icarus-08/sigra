@@ -329,13 +329,39 @@
                     <div>Otros: $${totales.otros.toFixed(2)}</div>`;
     }
 
-    function renderChart(){
-      const ctx = document.getElementById('grafico').getContext('2d');
-      if(window.myChart) window.myChart.destroy();
-      const arr = readJSON(CARRERAS_KEY).filter(x => x.email === localStorage.getItem('sigra_current')).slice(-10);
-      const labels = arr.map(c => new Date(c.date).toLocaleDateString());
-      const neto = arr.map(c => c.neto);
-      const gastos = arr.map(c => c.gasolinaFija + c.gasolina + c.pagoCarro + c.mantenimiento + c.otros);
+function renderChart(){
+  const ctx = document.getElementById('grafico').getContext('2d');
+  if(window.myChart) window.myChart.destroy();
+
+  const arr = readJSON(CARRERAS_KEY).filter(x => x.email === localStorage.getItem('sigra_current')).slice(-10);
+  const labels = arr.map(c => new Date(c.date).toLocaleDateString());
+
+  // Calculamos gastos y ganancia
+  const gastos = arr.map(c => c.gasolinaFija + c.gasolina + c.pagoCarro + c.mantenimiento + c.otros);
+  const ganancia = arr.map(c => c.tarifa - gastos[arr.indexOf(c)]);
+
+  window.myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Ganancia', data: ganancia, backgroundColor: '#28a745' }, // verde
+        { label: 'Gastos', data: gastos, backgroundColor: '#dc3545' }     // rojo
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins: {
+        legend: { position:'top' }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
 
       window.myChart = new Chart(ctx, {
         type: 'bar',
@@ -397,3 +423,4 @@
   </script>
 </body>
 </html>
+
