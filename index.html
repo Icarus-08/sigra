@@ -72,7 +72,8 @@
         <input id="regPass" type="password" placeholder="Contraseña" />
         <input id="regPass2" type="password" placeholder="Confirmar Contraseña" />
         <div style="margin:8px 0" class="terms-checkbox">
-          <input id="acceptTerms" type="checkbox" /> <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
+          <input id="acceptTerms" type="checkbox" /> 
+          <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
         </div>
         <div class="row">
           <button onclick="createAccount()">Crear</button>
@@ -101,22 +102,27 @@
         <div>
           <div style="margin-bottom:12px">
             <h3>Calcular Ganancia</h3>
+
             <div class="row">
               <input id="tarifa" placeholder="Tarifa (ganancia) $" />
               <input id="tiempo" placeholder="Tiempo (h)" />
             </div>
+
             <div class="row">
-              <input id="carro" placeholder="Gastos carro $" />
+              <input id="pagoCarro" placeholder="Pago carro $" />
+              <input id="gasolina" placeholder="Gasolina $" />
             </div>
+
             <div class="row">
-              <input id="gasolinaDinero" placeholder="Dinero gasolina $" />
               <input id="mantenimiento" placeholder="Mantenimiento $" />
               <input id="otros" placeholder="Otros gastos $" />
             </div>
+
             <div class="row">
               <button onclick="calcular()">Calcular</button>
               <button class="secondary" onclick="guardarCarrera()">Guardar Carrera</button>
             </div>
+
             <div id="resultado" class="list" style="margin-top:8px"></div>
           </div>
 
@@ -163,15 +169,18 @@
   <script>
     const USERS_KEY = 'sigra_users';
     const SESSIONS_KEY = 'sigra_sessions';
-    const sanitizeEmailKey = (email)=>email.trim().toLowerCase();
+    const CARRERAS_KEY='sigra_carreras';
+    const PRECIOS_COMBUSTIBLE = { g95:0.938, g90:0.896, diesel:0.845 };
+
+    const sanitizeEmailKey = email => email.trim().toLowerCase();
 
     function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
     function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
-
     function hashPass(p){return btoa(p)}
 
     function showRegister(){document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.remove('hidden')}
     function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
+
     function doLogin(){ 
       const email=sanitizeEmailKey(document.getElementById('loginEmail').value);
       const pass=document.getElementById('loginPass').value;
@@ -201,9 +210,7 @@
     }
 
     function updateUserCount(){document.getElementById('userCount').innerText=readJSON(USERS_KEY).length}
-
     function doLogout(){localStorage.removeItem('sigra_current');location.reload()}
-
     function recordSession(email){const arr=readJSON(SESSIONS_KEY);arr.push({email,date:new Date().toISOString()});writeJSON(SESSIONS_KEY,arr)}
     function openSessions(){document.getElementById('sessionsModal').classList.add('show');renderSessions()}
     function closeSessions(){document.getElementById('sessionsModal').classList.remove('show')}
@@ -213,10 +220,6 @@
       arr.slice().reverse().forEach(s=>{const d=new Date(s.date);const row=document.createElement('div');row.innerText=`${s.email} — ${d.toLocaleString()}`;el.appendChild(row)})
     }
 
-    const CARRERAS_KEY='sigra_carreras';
-
-    // --- PRECIOS FIJOS ---
-    const PRECIOS_COMBUSTIBLE = { g95:0.938, g90:0.896, diesel:0.845 };
     function getLastFuelPrice(){return PRECIOS_COMBUSTIBLE.g95}
     function loadFuelPrices(){
       const el=document.getElementById('fuelList');
@@ -230,12 +233,11 @@
     function calcular(){
       const tarifa = parseFloat(document.getElementById('tarifa').value) || 0;
       const gasolinaFija = getLastFuelPrice();
-      const gasolinaDinero = parseFloat(document.getElementById('gasolinaDinero').value) || 0;
-      const carro = parseFloat(document.getElementById('carro').value) || 0;
+      const gasolina = parseFloat(document.getElementById('gasolina').value) || 0;
+      const pagoCarro = parseFloat(document.getElementById('pagoCarro').value) || 0;
       const mantenimiento = parseFloat(document.getElementById('mantenimiento').value) || 0;
       const otros = parseFloat(document.getElementById('otros').value) || 0;
-
-      const neto = tarifa - (gasolinaFija + gasolinaDinero + carro + mantenimiento + otros);
+      const neto = tarifa - (gasolinaFija + gasolina + pagoCarro + mantenimiento + otros);
       document.getElementById('resultado').innerText = 'Ganancia estimada: $' + neto.toFixed(2);
     }
 
@@ -245,15 +247,15 @@
 
       const tarifa = parseFloat(document.getElementById('tarifa').value) || 0;
       const gasolinaFija = getLastFuelPrice();
-      const gasolinaDinero = parseFloat(document.getElementById('gasolinaDinero').value) || 0;
-      const carro = parseFloat(document.getElementById('carro').value) || 0;
+      const gasolina = parseFloat(document.getElementById('gasolina').value) || 0;
+      const pagoCarro = parseFloat(document.getElementById('pagoCarro').value) || 0;
       const mantenimiento = parseFloat(document.getElementById('mantenimiento').value) || 0;
       const otros = parseFloat(document.getElementById('otros').value) || 0;
 
-      const neto = tarifa - (gasolinaFija + gasolinaDinero + carro + mantenimiento + otros);
+      const neto = tarifa - (gasolinaFija + gasolina + pagoCarro + mantenimiento + otros);
 
       const arr = readJSON(CARRERAS_KEY);
-      arr.push({email, date: new Date().toISOString(), tarifa, gasolinaFija, gasolinaDinero, carro, mantenimiento, otros, neto});
+      arr.push({email, date: new Date().toISOString(), tarifa, gasolinaFija, gasolina, pagoCarro, mantenimiento, otros, neto});
       writeJSON(CARRERAS_KEY, arr);
 
       loadHistorial();
@@ -276,13 +278,13 @@
     function loadTotals(){
       const arr=readJSON(CARRERAS_KEY); const current=localStorage.getItem('sigra_current');
       const totales=arr.filter(x=>x.email===current).reduce((acc,v)=>{
-        acc.neto+=v.neto; acc.gasolina+=v.gasolinaFija+v.gasolinaDinero; acc.carro+=v.carro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
+        acc.neto+=v.neto; acc.gasolina+=v.gasolinaFija+v.gasolina; acc.carro+=v.pagoCarro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
         return acc;
       },{neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0});
       const el=document.getElementById('totales');
       el.innerHTML=`<div>Neto: $${totales.neto.toFixed(2)}</div>
                     <div>Gasolina: $${totales.gasolina.toFixed(2)}</div>
-                    <div>Carro: $${totales.carro.toFixed(2)}</div>
+                    <div>Pago carro: $${totales.carro.toFixed(2)}</div>
                     <div>Mantenimiento: $${totales.mantenimiento.toFixed(2)}</div>
                     <div>Otros: $${totales.otros.toFixed(2)}</div>`;
     }
@@ -293,7 +295,7 @@
       const data=arr.filter(x=>x.email===current).slice(-10);
       const labels=data.map(d=>new Date(d.date).toLocaleDateString());
       const neto=data.map(d=>d.neto);
-      const gastos=data.map(d=>d.gasolinaFija + d.gasolinaDinero + d.carro + d.mantenimiento + d.otros);
+      const gastos=data.map(d=>d.gasolinaFija + d.gasolina + d.pagoCarro + d.mantenimiento + d.otros);
       new Chart(ctx,{type:'bar',data:{labels, datasets:[{label:'Neto',data:neto,backgroundColor:'var(--primary)'},{label:'Gastos',data:gastos,backgroundColor:'#6c757d'}]},options:{responsive:true,plugins:{legend:{position:'top'}}}});
     }
 
@@ -304,7 +306,15 @@
       loadHistorial(); loadTotals(); loadFuelPrices(); renderChart();
     }
 
-    window.addEventListener('load',()=>{setTimeout(()=>{document.getElementById('splash').style.opacity=0;setTimeout(()=>{document.getElementById('splash').style.display='none';updateUserCount()},500)},1500)})
+    window.addEventListener('load',()=>{
+      setTimeout(()=>{
+        document.getElementById('splash').style.opacity=0;
+        setTimeout(()=>{
+          document.getElementById('splash').style.display='none';
+          updateUserCount();
+        },500)
+      },1500)
+    })
   </script>
 </body>
 </html>
