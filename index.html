@@ -144,21 +144,13 @@ footer{margin-top:12px; text-align:center; color:#666; font-size:.85rem;}
         </div>
 
         <div>
-          <h3>Gráfico (gastos vs neto)</h3>
+          <h3>Gráfico (Gastos vs Ganancia)</h3>
           <canvas id="grafico" style="max-width:100%;height:240px;background:#fff;padding:8px;border-radius:8px"></canvas>
         </div>
       </div>
     </div>
 
     <footer>SIGRA • LocalStorage • Desarrollo local</footer>
-  </div>
-</div>
-
-<div class="modal" id="sessionsModal">
-  <div class="content">
-    <h3>Historial de sesiones</h3>
-    <div id="sessionsList" class="list"></div>
-    <div style="text-align:center;margin-top:8px"><button onclick="closeSessions()">Cerrar</button></div>
   </div>
 </div>
 
@@ -172,80 +164,29 @@ const sanitizeEmailKey=email=>email.trim().toLowerCase();
 function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
 function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
 function hashPass(p){return btoa(p)}
-function showRegister(){document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.remove('hidden')}
-function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
-function doLogin(){
-  const email=sanitizeEmailKey(document.getElementById('loginEmail').value);
-  const pass=document.getElementById('loginPass').value;
-  const users=readJSON(USERS_KEY);
-  const u=users.find(x=>x.email===email);
-  if(!u||u.password!==hashPass(pass)){alert('Correo o contraseña incorrectos');return}
-  localStorage.setItem('sigra_current',email);
-  recordSession(email);
-  showAppForUser(email);
-}
-function createAccount(){
-  const name=document.getElementById('regName').value.trim();
-  const last=document.getElementById('regLast').value.trim();
-  const email=sanitizeEmailKey(document.getElementById('regEmail').value);
-  const pass=document.getElementById('regPass').value;
-  const pass2=document.getElementById('regPass2').value;
-  if(!name||!last||!email||!pass){alert('Completa todos los campos');return}
-  if(pass!==pass2){alert('Las contraseñas no coinciden');return}
-  const users=readJSON(USERS_KEY);
-  if(users.find(u=>u.email===email)){alert('Ya existe una cuenta con ese correo');return}
-  users.push({name,last,email,password:hashPass(pass),created:new Date().toISOString()});
-  writeJSON(USERS_KEY,users);
-  alert('Cuenta creada. Ya puedes iniciar sesión.');
-  updateUserCount();
-  showLogin();
-}
-function updateUserCount(){document.getElementById('userCount').innerText=readJSON(USERS_KEY).length}
-function doLogout(){localStorage.removeItem('sigra_current');location.reload()}
-function recordSession(email){const arr=readJSON(SESSIONS_KEY);arr.push({email,date:new Date().toISOString()});writeJSON(SESSIONS_KEY,arr)}
-function openSessions(){document.getElementById('sessionsModal').classList.add('show');renderSessions()}
-function closeSessions(){document.getElementById('sessionsModal').classList.remove('show')}
-function renderSessions(){
-  const arr=readJSON(SESSIONS_KEY);const el=document.getElementById('sessionsList');el.innerHTML='';
-  if(!arr.length){el.innerHTML='<div class="small muted">No hay sesiones</div>';return}
-  arr.slice().reverse().forEach(s=>{
-    const d=new Date(s.date);
-    const row=document.createElement('div');
-    row.innerText=`${s.email} — ${d.toLocaleString()}`;
-    el.appendChild(row);
-  })
-}
-
-function getLastFuelPrice(){return PRECIOS_COMBUSTIBLE.g95}
-function loadFuelPrices(){
-  const el=document.getElementById('fuelList');
-  el.innerHTML=`<div>95: $${PRECIOS_COMBUSTIBLE.g95.toFixed(2)}</div>
-                <div>90: $${PRECIOS_COMBUSTIBLE.g90.toFixed(2)}</div>
-                <div>Diésel: $${PRECIOS_COMBUSTIBLE.diesel.toFixed(2)}</div>`;
-}
 
 function calcular(){
   const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const gasolinaFija=getLastFuelPrice();
+  const gasolinaFija=PRECIOS_COMBUSTIBLE.g95;
   const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
   const pagoCarro=parseFloat(document.getElementById('pagoCarro').value)||0;
   const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
   const otros=parseFloat(document.getElementById('otros').value)||0;
-  const neto=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
-  document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
+  const ganancia=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
+  document.getElementById('resultado').innerText='Ganancia estimada: $'+ganancia.toFixed(2);
 }
 
 function guardarCarrera(){
   const email=localStorage.getItem('sigra_current'); if(!email){alert('No estás logueado');return;}
   const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const gasolinaFija=getLastFuelPrice();
+  const gasolinaFija=PRECIOS_COMBUSTIBLE.g95;
   const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
   const pagoCarro=parseFloat(document.getElementById('pagoCarro').value)||0;
   const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
   const otros=parseFloat(document.getElementById('otros').value)||0;
-  const neto=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
+  const ganancia=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
   const arr=readJSON(CARRERAS_KEY);
-  arr.push({email,date:new Date().toISOString(),tarifa,gasolinaFija,gasolina,pagoCarro,mantenimiento,otros,neto});
+  arr.push({email,date:new Date().toISOString(),tarifa,gasolinaFija,gasolina,pagoCarro,mantenimiento,otros,ganancia});
   writeJSON(CARRERAS_KEY,arr);
   loadHistorial(); loadTotals(); renderChart();
   alert('Carrera guardada');
@@ -257,7 +198,7 @@ function loadHistorial(){
   arr.filter(x=>x.email===current).slice().reverse().forEach(c=>{
     const d=new Date(c.date);
     const row=document.createElement('div');
-    row.innerText=`${d.toLocaleDateString()} — Neto: $${c.neto.toFixed(2)}`;
+    row.innerText=`${d.toLocaleDateString()} — Ganancia: $${c.ganancia.toFixed(2)}`;
     el.appendChild(row);
   })
 }
@@ -265,15 +206,16 @@ function loadHistorial(){
 function loadTotals(){
   const arr=readJSON(CARRERAS_KEY); const current=localStorage.getItem('sigra_current');
   const totales=arr.filter(x=>x.email===current).reduce((acc,v)=>{
-    acc.neto+=v.neto; acc.gasolina+=v.gasolinaFija+v.gasolina; acc.carro+=v.pagoCarro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
+    acc.ganancia+=v.ganancia; acc.gasolina+=v.gasolinaFija+v.gasolina; acc.carro+=v.pagoCarro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
     return acc;
-  },{neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0});
+  },{ganancia:0,gasolina:0,carro:0,mantenimiento:0,otros:0});
   const el=document.getElementById('totales');
-  el.innerHTML=`<div>Neto: $${totales.neto.toFixed(2)}</div>
+  el.innerHTML=`<div>Ganancia: $${totales.ganancia.toFixed(2)}</div>
                 <div>Gasolina: $${totales.gasolina.toFixed(2)}</div>
                 <div>Pago carro: $${totales.carro.toFixed(2)}</div>
                 <div>Mantenimiento: $${totales.mantenimiento.toFixed(2)}</div>
                 <div>Otros: $${totales.otros.toFixed(2)}</div>`;
+  return totales;
 }
 
 function renderChart(){
@@ -281,14 +223,14 @@ function renderChart(){
   if(window.myChart) window.myChart.destroy();
   const arr=readJSON(CARRERAS_KEY).filter(x=>x.email===localStorage.getItem('sigra_current')).slice(-10);
   const labels=arr.map(c=>new Date(c.date).toLocaleDateString());
-  const neto=arr.map(c=>c.neto);
+  const ganancias=arr.map(c=>c.ganancia);
   const gastos=arr.map(c=>c.gasolinaFija+c.gasolina+c.pagoCarro+c.mantenimiento+c.otros);
 
   window.myChart=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets:[
-      {label:'Neto', data:neto, backgroundColor:'var(--primary)'},
-      {label:'Gastos', data:gastos, backgroundColor:'var(--secondary)'}
+      {label:'Ganancia', data:ganancias, backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--primary')},
+      {label:'Gastos', data:gastos, backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--secondary')}
     ]},
     options:{
       responsive:true,
@@ -308,13 +250,14 @@ function renderChart(){
   });
 }
 
-function exportPDF(){
+async function exportPDF(){
   const { jsPDF }=window.jspdf;
   const carreras=readJSON(CARRERAS_KEY).filter(c=>c.email===localStorage.getItem('sigra_current'));
   if(!carreras.length){alert('No hay carreras para exportar');return;}
   const doc=new jsPDF();
   doc.setFontSize(18);
   doc.text("Historial de Carreras - SIGRA",14,20);
+
   const tableData=carreras.map(c=>[
     new Date(c.date).toLocaleString(),
     `$${c.tarifa.toFixed(2)}`,
@@ -322,17 +265,23 @@ function exportPDF(){
     `$${c.pagoCarro.toFixed(2)}`,
     `$${c.mantenimiento.toFixed(2)}`,
     `$${c.otros.toFixed(2)}`,
-    `$${c.neto.toFixed(2)}`
+    `$${c.ganancia.toFixed(2)}`
   ]);
-  doc.autoTable({startY:30, head:[['Fecha','Tarifa','Gasolina','Pago carro','Mantenimiento','Otros','Neto']], body:tableData});
-  doc.save('historial_SIGRA.pdf');
-}
+  doc.autoTable({startY:30, head:[['Fecha','Tarifa','Gasolina','Pago carro','Mantenimiento','Otros','Ganancia']], body:tableData});
 
-function showAppForUser(email){
-  document.getElementById('authWrap').style.display='none';
-  document.getElementById('appWrap').style.display='block';
-  document.getElementById('currentUserLabel').innerText=email;
-  loadHistorial(); loadTotals(); loadFuelPrices(); renderChart();
+  // Totales
+  const totales=loadTotals();
+  doc.setFontSize(14);
+  doc.text("Totales acumulados:",14, doc.lastAutoTable.finalY+10);
+  doc.text(`Ganancia: $${totales.ganancia.toFixed(2)}`,14,doc.lastAutoTable.finalY+18);
+  doc.text(`Gastos: $${(totales.gasolina+totales.carro+totales.mantenimiento+totales.otros).toFixed(2)}`,14,doc.lastAutoTable.finalY+26);
+
+  // Gráfico al PDF
+  const canvas=document.getElementById("grafico");
+  const imgData=canvas.toDataURL("image/png",1.0);
+  doc.addImage(imgData,"PNG",14,doc.lastAutoTable.finalY+40,180,90);
+
+  doc.save('historial_SIGRA.pdf');
 }
 
 window.addEventListener('load',()=>{
@@ -347,4 +296,3 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
-
