@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIGRA - Gestor de Conductor 🚖</title>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <style>
 :root { --primary:#007bff; --secondary:#6c757d; --bg:#f4f4f9; --card-bg:#fff; }
 body { margin:0; font-family:'Segoe UI', Roboto, Arial, sans-serif; background:var(--bg); color:#333; }
@@ -12,30 +16,13 @@ body { margin:0; font-family:'Segoe UI', Roboto, Arial, sans-serif; background:v
 .sigra span:nth-child(1){animation-delay:0.2s;} .sigra span:nth-child(2){animation-delay:0.3s;} .sigra span:nth-child(3){animation-delay:0.4s;} .sigra span:nth-child(4){animation-delay:0.5s;} .sigra span:nth-child(5){animation-delay:0.6s;}
 @keyframes fadeInLetter { from {opacity:0; filter:blur(4px);} to {opacity:1; filter:blur(0);} }
 .center-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem; }
-.card { width:100%; max-width:920px; background:var(--card-bg); padding:1.25rem; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.12); }
 .hidden{display:none;}
-h1,h2,h3{margin:.25rem 0;}
-.row{display:flex;gap:12px;}
-.col{flex:1;}
-input, select, button, textarea { width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid #ccc; font-size:15px;}
-button{background:var(--primary); color:#fff; border:none; cursor:pointer;}
-button.secondary{background:var(--secondary);}
-.topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
-.small{font-size:.9rem; color:#555;}
-.muted{color:#666;}
-.grid{display:grid; grid-template-columns:1fr 340px; gap:12px;}
-.list{max-height:260px; overflow:auto; padding:8px; background:#fafafa; border-radius:8px;}
-table{width:100%; border-collapse:collapse;}
-table td, table th{padding:6px; border-bottom:1px solid #eee;}
-.actions{display:flex; gap:8px;}
 .pill{display:inline-block; padding:6px 10px; border-radius:999px; background:#eef4ff; color:var(--primary); font-weight:600;}
-footer{margin-top:12px; text-align:center; color:#666; font-size:.85rem;}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-.modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; visibility:hidden; opacity:0; transition:all .2s; z-index:50;}
-.modal.show{visibility:visible; opacity:1;}
+.list{max-height:260px; overflow:auto; padding:8px; background:#fafafa; border-radius:8px;}
 .modal .content{background:var(--card-bg); padding:1rem; border-radius:10px; max-width:720px; max-height:80vh; overflow:auto;}
-.right{text-align:right;}
 </style>
+
+<!-- Librerías JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -52,115 +39,128 @@ footer{margin-top:12px; text-align:center; color:#666; font-size:.85rem;}
 
 <!-- Auth -->
 <div class="center-wrap" id="authWrap">
-  <div class="card" id="loginCard">
-    <h1 style="color:var(--primary)">SIGRA</h1>
+  <div class="card shadow p-4" id="loginCard" style="max-width:420px">
+    <h1 class="text-primary">SIGRA</h1>
+
+    <!-- Login -->
     <div id="loginView">
-      <input id="loginEmail" type="email" placeholder="Correo" />
-      <input id="loginPass" type="password" placeholder="Contraseña" />
-      <div class="row">
-        <button onclick="doLogin()">Entrar</button>
-        <button class="secondary" onclick="showRegister()">Crear Cuenta</button>
+      <input id="loginEmail" type="email" class="form-control mb-2" placeholder="Correo" />
+      <input id="loginPass" type="password" class="form-control mb-3" placeholder="Contraseña" />
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary w-50" onclick="doLogin()">Entrar</button>
+        <button class="btn btn-secondary w-50" onclick="showRegister()">Crear Cuenta</button>
       </div>
-      <p class="small muted">Al continuar aceptas nuestros <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></p>
+      <p class="small text-muted mt-2">Al continuar aceptas nuestros 
+        <a href="#" onclick="openTerms(event)">Términos y Condiciones</a>
+      </p>
     </div>
+
+    <!-- Registro -->
     <div id="registerView" class="hidden">
       <h2>Crear Cuenta</h2>
-      <div class="row">
-        <input id="regName" placeholder="Nombre" />
-        <input id="regLast" placeholder="Apellido" />
+      <div class="row g-2">
+        <div class="col"><input id="regName" class="form-control" placeholder="Nombre" /></div>
+        <div class="col"><input id="regLast" class="form-control" placeholder="Apellido" /></div>
       </div>
-      <input id="regEmail" type="email" placeholder="Correo" />
-      <input id="regPass" type="password" placeholder="Contraseña" />
-      <input id="regPass2" type="password" placeholder="Confirmar Contraseña" />
-      <div style="margin:8px 0" class="terms-checkbox">
-        <input id="acceptTerms" type="checkbox" />
-        <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
+      <input id="regEmail" type="email" class="form-control mt-2" placeholder="Correo" />
+      <input id="regPass" type="password" class="form-control mt-2" placeholder="Contraseña" />
+      <input id="regPass2" type="password" class="form-control mt-2" placeholder="Confirmar Contraseña" />
+
+      <div class="form-check my-2">
+        <input id="acceptTerms" type="checkbox" class="form-check-input" />
+        <label class="form-check-label" for="acceptTerms">
+          He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a>
+        </label>
       </div>
-      <div class="row">
-        <button onclick="createAccount()">Crear</button>
-        <button class="secondary" onclick="showLogin()">Volver</button>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary w-50" onclick="createAccount()">Crear</button>
+        <button class="btn btn-secondary w-50" onclick="showLogin()">Volver</button>
       </div>
     </div>
-    <div style="margin-top:10px" class="small muted">Usuarios registrados: <span id="userCount">0</span></div>
+
+    <div class="small text-muted mt-3">
+      Usuarios registrados: <span id="userCount">0</span>
+    </div>
   </div>
 </div>
 
 <!-- App -->
-<div style="display:none;padding:18px" id="appWrap">
-  <div class="card">
-    <div class="topbar">
+<div class="container py-4" style="display:none" id="appWrap">
+  <div class="card p-3 shadow">
+    <div class="d-flex justify-content-between align-items-center mb-3">
       <div>
-        <h2 style="margin:0">Gestor de Conductor 🚖</h2>
+        <h2 class="m-0">Gestor de Conductor 🚖</h2>
         <div class="small">Usuario: <span id="currentUserLabel" class="pill">-</span></div>
       </div>
-      <div class="actions">
-        <button onclick="openSessions()" class="secondary">Ver sesiones</button>
-        <button id="btnLogout" class="secondary" onclick="doLogout()">Cerrar Sesión</button>
+      <div class="d-flex gap-2">
+        <button onclick="openSessions()" class="btn btn-secondary">Ver sesiones</button>
+        <button id="btnLogout" class="btn btn-secondary" onclick="doLogout()">Cerrar Sesión</button>
       </div>
     </div>
 
-    <div class="grid">
-      <div>
-        <div style="margin-bottom:12px">
-          <h3>Calcular Ganancia</h3>
-          <div class="row">
-            <input id="tarifa" placeholder="Tarifa (ganancia) $" />
-            <input id="tiempo" placeholder="Tiempo (h)" />
-          </div>
-          <div class="row">
-            <input id="pagoCarro" placeholder="Pago carro $" />
-            <input id="gasolina" placeholder="Gasolina $" />
-          </div>
-          <div class="row">
-            <input id="mantenimiento" placeholder="Mantenimiento $" />
-            <input id="otros" placeholder="Otros gastos $" />
-          </div>
-          <div class="row">
-            <button onclick="calcular()">Calcular</button>
-            <button class="secondary" onclick="guardarCarrera()">Guardar Carrera</button>
-          </div>
-          <div id="resultado" class="list" style="margin-top:8px"></div>
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <h3>Calcular Ganancia</h3>
+        <div class="row g-2">
+          <div class="col"><input id="tarifa" class="form-control" placeholder="Tarifa (ganancia) $" /></div>
+          <div class="col"><input id="tiempo" class="form-control" placeholder="Tiempo (h)" /></div>
+        </div>
+        <div class="row g-2">
+          <div class="col"><input id="pagoCarro" class="form-control" placeholder="Pago carro $" /></div>
+          <div class="col"><input id="gasolina" class="form-control" placeholder="Gasolina $" /></div>
+        </div>
+        <div class="row g-2">
+          <div class="col"><input id="mantenimiento" class="form-control" placeholder="Mantenimiento $" /></div>
+          <div class="col"><input id="otros" class="form-control" placeholder="Otros gastos $" /></div>
+        </div>
+        <div class="d-flex gap-2 my-2">
+          <button class="btn btn-primary" onclick="calcular()">Calcular</button>
+          <button class="btn btn-secondary" onclick="guardarCarrera()">Guardar Carrera</button>
+        </div>
+        <div id="resultado" class="list mt-2"></div>
+
+        <h3 class="mt-3">Historial de Carreras</h3>
+        <div id="historialList" class="list"></div>
+        <div class="d-flex gap-2 mt-2">
+          <button class="btn btn-primary" onclick="loadHistorial()">Refrescar</button>
+          <button class="btn btn-secondary" id="btnPDF" onclick="exportPDF()">Exportar PDF</button>
         </div>
 
-        <div style="margin-bottom:12px">
-          <h3>Historial de Carreras</h3>
-          <div id="historialList" class="list"></div>
-          <div style="margin-top:8px" class="row">
-            <button onclick="loadHistorial()">Refrescar</button>
-            <button class="secondary" id="btnPDF" onclick="exportPDF()">Exportar PDF</button>
-          </div>
-        </div>
-
-        <div>
-          <h3>Precios de Combustible</h3>
-          <div id="fuelList" class="list"></div>
-        </div>
+        <h3 class="mt-3">Precios de Combustible</h3>
+        <div id="fuelList" class="list"></div>
       </div>
 
-      <div>
-        <div style="margin-bottom:12px">
-          <h3>Totales acumulados</h3>
-          <div id="totales" class="list"></div>
-        </div>
+      <div class="col-lg-4">
+        <h3>Totales acumulados</h3>
+        <div id="totales" class="list mb-3"></div>
 
-        <div>
-          <h3>Gráfico (gastos vs neto)</h3>
-          <canvas id="grafico" style="max-width:100%;height:240px;background:#fff;padding:8px;border-radius:8px"></canvas>
-        </div>
+        <h3>Gráfico (gastos vs neto)</h3>
+        <canvas id="grafico" style="max-width:100%;height:240px;background:#fff;padding:8px;border-radius:8px"></canvas>
       </div>
     </div>
 
-    <footer>SIGRA • LocalStorage • Desarrollo local</footer>
+    <footer class="text-center text-muted small mt-3">
+      SIGRA • LocalStorage • Desarrollo local
+    </footer>
   </div>
 </div>
 
-<div class="modal" id="sessionsModal">
-  <div class="content">
-    <h3>Historial de sesiones</h3>
-    <div id="sessionsList" class="list"></div>
-    <div style="text-align:center;margin-top:8px"><button onclick="closeSessions()">Cerrar</button></div>
+<!-- Modal sesiones -->
+<div class="modal fade" id="sessionsModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+      <h3>Historial de sesiones</h3>
+      <div id="sessionsList" class="list"></div>
+      <div class="text-center mt-2">
+        <button class="btn btn-secondary" onclick="closeSessions()">Cerrar</button>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 const USERS_KEY='sigra_users';
@@ -347,10 +347,3 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
