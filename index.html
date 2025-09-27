@@ -537,34 +537,48 @@ function loadTotals(){
 }
 
 function renderChart(){
-  const ctx=document.getElementById('grafico').getContext('2d');
+  const ctx = document.getElementById('grafico').getContext('2d');
   if(window.myChart) window.myChart.destroy();
-  const arr=readJSON(CARRERAS_KEY).filter(x=>x.email===localStorage.getItem('sigra_current')).slice(-10);
-  const labels=arr.map(c=>new Date(c.date).toLocaleDateString());
-  const neto=arr.map(c=>c.neto);
-  const gastos=arr.map(c=>c.gasolinaFija+c.gasolina+c.pagoCarro+c.mantenimiento+c.otros);
 
-  window.myChart=new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets:[
-      {label:'Neto', data:neto, backgroundColor:'var(--primary)'},
-      {label:'Gastos', data:gastos, backgroundColor:'var(--secondary)'}
-    ]},
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{position:'top'},
-        datalabels:{
-          anchor:'end',
-          align:'top',
-          color:'#fff',
-          font:{weight:'bold'},
-          formatter: val=>`$${val.toFixed(2)}`
+  const arr = readJSON(CARRERAS_KEY).filter(x => x.email === localStorage.getItem('sigra_current')).slice(-10);
+  const labels = arr.map(c => new Date(c.date).toLocaleDateString());
+  const ganancia = arr.map(c => c.neto); 
+  const gastos = arr.map(c => c.gasolinaFija + c.gasolina + c.pagoCarro + c.mantenimiento + c.otros);
+
+  window.myChart = new Chart(ctx,{
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Ganancia',
+          data: ganancia,
+          backgroundColor: 'green'
+        },
+        {
+          label: 'Gastos',
+          data: gastos,
+          backgroundColor: 'red'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          color: '#fff',
+          font: { weight: 'bold' },
+          formatter: val => `$${val.toFixed(2)}`
         }
       },
-      scales:{y:{beginAtZero:true}}
+      scales: {
+        y: { beginAtZero: true }
+      }
     },
-    plugins:[ChartDataLabels]
+    plugins: [ChartDataLabels]
   });
 }
 
@@ -784,3 +798,4 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
+
