@@ -511,7 +511,7 @@ function guardar(){
   arr.push({email,date:new Date().toISOString(),tarifa,gasolinaFija,gasolina,pagoCarro,mantenimiento,otros,neto});
   writeJSON(CARRERAS_KEY,arr);
   loadHistorial(); loadTotals(); renderChart();
-  alert('Carrera guardada');
+  alert('Guardado');
 }
 
 function loadHistorial(){
@@ -801,6 +801,7 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
+
 
 
 
