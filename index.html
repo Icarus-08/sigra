@@ -4,25 +4,158 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIGRA - Gestor de Conductor 🚖</title>
-
-<!-- Bootstrap CSS -->
+<!-- Fuente Hollow Knight-like -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
 <style>
-:root { --primary:#007bff; --secondary:#6c757d; --bg:#f4f4f9; --card-bg:#fff; }
-body { margin:0; font-family:'Segoe UI', Roboto, Arial, sans-serif; background:var(--bg); color:#333; }
-.splash { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:black; color:var(--primary); font-size:3rem; letter-spacing:.5rem; z-index:30; }
-.sigra span { opacity:0; animation:fadeInLetter 2.5s forwards; }
-.sigra span:nth-child(1){animation-delay:0.2s;} .sigra span:nth-child(2){animation-delay:0.3s;} .sigra span:nth-child(3){animation-delay:0.4s;} .sigra span:nth-child(4){animation-delay:0.5s;} .sigra span:nth-child(5){animation-delay:0.6s;}
-@keyframes fadeInLetter { from {opacity:0; filter:blur(4px);} to {opacity:1; filter:blur(0);} }
-.center-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem; }
-.hidden{display:none;}
-.pill{display:inline-block; padding:6px 10px; border-radius:999px; background:#eef4ff; color:var(--primary); font-weight:600;}
-.list{max-height:260px; overflow:auto; padding:8px; background:#fafafa; border-radius:8px;}
-.modal .content{background:var(--card-bg); padding:1rem; border-radius:10px; max-width:720px; max-height:80vh; overflow:auto;}
-</style>
+:root { 
+  --primary:#00ffa6; 
+  --secondary:#00b7ff; 
+  --bg:#0d1117; 
+  --card-bg:#161b22; 
+  --input-bg:#0d1117;
+  --list-bg:#0d1117;
+  --canvas-bg:#0d1117;
+  --border-color:#222;
+  --border-input:#333;
+  --text-color:#e6e6e6;
+  --text-muted:#888;
+  --text-small:#aaa;
+}
 
-<!-- Librerías JS -->
+/* Tema claro */
+.light-theme {
+  --bg: #f5f5dc; /* Blanco hueso */
+  --card-bg: #ffffff; /* Tarjetas blancas */
+  --input-bg: #ffffff;
+  --list-bg: #f8f9fa;
+  --canvas-bg: #f8f9fa;
+  --border-color: #ddd;
+  --border-input: #ccc;
+  --text-color: #333333;
+  --text-muted: #666666;
+  --text-small: #555555;
+}
+
+body { 
+  margin:0; 
+  font-family:'Cinzel', serif; 
+  background:var(--bg); 
+  color:var(--text-color); 
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.splash { 
+  position:fixed; 
+  inset:0; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  background:black; 
+  color:var(--primary); 
+  font-size:3rem; 
+  letter-spacing:.5rem; 
+  z-index:30; 
+}
+
+.sigra span { 
+  opacity:0; 
+  animation:fadeInLetter 2.5s forwards; 
+}
+.sigra span:nth-child(1){animation-delay:0.2s;} 
+.sigra span:nth-child(2){animation-delay:0.3s;} 
+.sigra span:nth-child(3){animation-delay:0.4s;} 
+.sigra span:nth-child(4){animation-delay:0.5s;} 
+.sigra span:nth-child(5){animation-delay:0.6s;}
+
+@keyframes fadeInLetter { 
+  from {opacity:0; filter:blur(4px);} 
+  to {opacity:1; filter:blur(0);} 
+}
+
+.center-wrap { 
+  min-height:100vh; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  padding:1rem; 
+}
+
+.card { 
+  width:100%; 
+  max-width:920px; 
+  background:var(--card-bg); 
+  padding:1.25rem; 
+  border-radius:12px; 
+  box-shadow:0 6px 20px rgba(0,0,0,.5); 
+  border:1px solid var(--primary);
+}
+
+.hidden{display:none;}
+h1,h2,h3{margin:.25rem 0;}
+.row{display:flex;gap:12px;}
+.col{flex:1;}
+input, select, button, textarea { 
+  width:100%; 
+  padding:10px; 
+  margin:6px 0; 
+  border-radius:8px; 
+  border:1px solid var(--border-input); 
+  font-size:15px;
+  background:var(--input-bg);
+  color:var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+button{
+  background:var(--primary); 
+  color:#0d1117; 
+  border:none; 
+  cursor:pointer; 
+  font-weight:bold;
+}
+button.secondary{
+  background:var(--secondary); 
+  color:#0d1117;
+}
+
+/* Botón de tema */
+.theme-toggle {
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 10px;
+}
+
+.theme-toggle:hover {
+  background: #555;
+}
+
+.topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+.small{font-size:.9rem; color:var(--text-small);}
+.muted{color:var(--text-muted);}
+.grid{display:grid; grid-template-columns:1fr 340px; gap:12px;}
+.list{max-height:260px; overflow:auto; padding:8px; background:var(--list-bg); border-radius:8px; border:1px solid var(--border-color); transition: background-color 0.3s ease, border-color 0.3s ease;}
+table{width:100%; border-collapse:collapse;}
+table td, table th{padding:6px; border-bottom:1px solid var(--border-color);}
+.actions{display:flex; gap:8px; align-items:center;}
+.pill{display:inline-block; padding:6px 10px; border-radius:999px; background:var(--list-bg); color:var(--primary); font-weight:600; border:1px solid var(--primary); transition: background-color 0.3s ease;}
+footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.85rem;}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; visibility:hidden; opacity:0; transition:all .2s; z-index:50;}
+.modal.show{visibility:visible; opacity:1;}
+.modal .content{background:var(--card-bg); padding:1rem; border-radius:10px; max-width:720px; max-height:80vh; overflow:auto; transition: background-color 0.3s ease;}
+.right{text-align:right;}
+.terms-content{max-height:400px; overflow-y:auto; background:var(--list-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin:10px 0; line-height:1.5; transition: background-color 0.3s ease, border-color 0.3s ease;}
+.terms-buttons{display:flex; gap:10px; justify-content:center; margin-top:15px;}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -39,135 +172,203 @@ body { margin:0; font-family:'Segoe UI', Roboto, Arial, sans-serif; background:v
 
 <!-- Auth -->
 <div class="center-wrap" id="authWrap">
-  <div class="card shadow p-4" id="loginCard" style="max-width:420px">
-    <h1 class="text-primary">SIGRA</h1>
-
-    <!-- Login -->
-    <div id="loginView">
-      <input id="loginEmail" type="email" class="form-control mb-2" placeholder="Correo" />
-      <input id="loginPass" type="password" class="form-control mb-3" placeholder="Contraseña" />
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary w-50" onclick="doLogin()">Entrar</button>
-        <button class="btn btn-secondary w-50" onclick="showRegister()">Crear Cuenta</button>
-      </div>
-      <p class="small text-muted mt-2">Al continuar aceptas nuestros 
-        <a href="#" onclick="openTerms(event)">Términos y Condiciones</a>
-      </p>
+  <div class="card" id="loginCard">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h1 style="color:var(--primary); margin: 0;">SIGRA</h1>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
     </div>
-
-    <!-- Registro -->
+    <div id="loginView">
+      <input id="loginEmail" type="email" placeholder="Correo" />
+      <input id="loginPass" type="password" placeholder="Contraseña" />
+      <div class="row">
+        <button onclick="doLogin()">Entrar</button>
+        <button class="secondary" onclick="showRegister()">Crear Cuenta</button>
+      </div>
+      <p class="small muted">Al continuar aceptas nuestros <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></p>
+    </div>
     <div id="registerView" class="hidden">
       <h2>Crear Cuenta</h2>
-      <div class="row g-2">
-        <div class="col"><input id="regName" class="form-control" placeholder="Nombre" /></div>
-        <div class="col"><input id="regLast" class="form-control" placeholder="Apellido" /></div>
+      <div class="row">
+        <input id="regName" placeholder="Nombre" />
+        <input id="regLast" placeholder="Apellido" />
       </div>
-      <input id="regEmail" type="email" class="form-control mt-2" placeholder="Correo" />
-      <input id="regPass" type="password" class="form-control mt-2" placeholder="Contraseña" />
-      <input id="regPass2" type="password" class="form-control mt-2" placeholder="Confirmar Contraseña" />
-
-      <div class="form-check my-2">
-        <input id="acceptTerms" type="checkbox" class="form-check-input" />
-        <label class="form-check-label" for="acceptTerms">
-          He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a>
-        </label>
+      <input id="regEmail" type="email" placeholder="Correo" />
+      <input id="regPass" type="password" placeholder="Contraseña" />
+      <input id="regPass2" type="password" placeholder="Confirmar Contraseña" />
+      <div style="margin:8px 0" class="terms-checkbox">
+        <input id="acceptTerms" type="checkbox" />
+        <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
       </div>
-
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary w-50" onclick="createAccount()">Crear</button>
-        <button class="btn btn-secondary w-50" onclick="showLogin()">Volver</button>
+      <div class="row">
+        <button onclick="createAccount()">Crear</button>
+        <button class="secondary" onclick="showLogin()">Volver</button>
       </div>
     </div>
-
-    <div class="small text-muted mt-3">
-      Usuarios registrados: <span id="userCount">0</span>
-    </div>
+    <div style="margin-top:10px" class="small muted">Usuarios registrados: <span id="userCount">0</span></div>
   </div>
 </div>
 
 <!-- App -->
-<div class="container py-4" style="display:none" id="appWrap">
-  <div class="card p-3 shadow">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<div style="display:none;padding:18px" id="appWrap">
+  <div class="card">
+    <div class="topbar">
       <div>
-        <h2 class="m-0">Gestor de Conductor 🚖</h2>
+        <h2 style="margin:0">Gestor de Conductor 🚖</h2>
         <div class="small">Usuario: <span id="currentUserLabel" class="pill">-</span></div>
       </div>
-      <div class="d-flex gap-2">
-        <button onclick="openSessions()" class="btn btn-secondary">Ver sesiones</button>
-        <button id="btnLogout" class="btn btn-secondary" onclick="doLogout()">Cerrar Sesión</button>
+      <div class="actions">
+        <button onclick="openSessions()" class="secondary">Ver sesiones</button>
+        <button id="btnLogout" class="secondary" onclick="doLogout()">Cerrar Sesión</button>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
       </div>
     </div>
 
-    <div class="row g-3">
-      <div class="col-lg-8">
-        <h3>Calcular Ganancia</h3>
-        <div class="row g-2">
-          <div class="col"><input id="tarifa" class="form-control" placeholder="Tarifa (ganancia) $" /></div>
-          <div class="col"><input id="tiempo" class="form-control" placeholder="Tiempo (h)" /></div>
-        </div>
-        <div class="row g-2">
-          <div class="col"><input id="pagoCarro" class="form-control" placeholder="Pago carro $" /></div>
-          <div class="col"><input id="gasolina" class="form-control" placeholder="Gasolina $" /></div>
-        </div>
-        <div class="row g-2">
-          <div class="col"><input id="mantenimiento" class="form-control" placeholder="Mantenimiento $" /></div>
-          <div class="col"><input id="otros" class="form-control" placeholder="Otros gastos $" /></div>
-        </div>
-        <div class="d-flex gap-2 my-2">
-          <button class="btn btn-primary" onclick="calcular()">Calcular</button>
-          <button class="btn btn-secondary" onclick="guardarCarrera()">Guardar Carrera</button>
-        </div>
-        <div id="resultado" class="list mt-2"></div>
-
-        <h3 class="mt-3">Historial de Carreras</h3>
-        <div id="historialList" class="list"></div>
-        <div class="d-flex gap-2 mt-2">
-          <button class="btn btn-primary" onclick="loadHistorial()">Refrescar</button>
-          <button class="btn btn-secondary" id="btnPDF" onclick="exportPDF()">Exportar PDF</button>
+    <div class="grid">
+      <div>
+        <div style="margin-bottom:12px">
+          <h3>Calcular Ganancia</h3>
+          <div class="row">
+            <input id="tarifa" placeholder="Tarifa (ganancia) $" />
+            <input id="tiempo" placeholder="Tiempo (h)" />
+          </div>
+          <div class="row">
+            <input id="pagoCarro" placeholder="Pago carro $" />
+            <input id="gasolina" placeholder="Gasolina $" />
+          </div>
+          <div class="row">
+            <input id="mantenimiento" placeholder="Mantenimiento $" />
+            <input id="otros" placeholder="Otros gastos $" />
+          </div>
+          <div class="row">
+            <button onclick="calcular()">Calcular</button>
+            <button class="secondary" onclick="guardar()">Guardar </button>
+          </div>
+          <div id="resultado" class="list" style="margin-top:8px"></div>
         </div>
 
-        <h3 class="mt-3">Precios de Combustible</h3>
-        <div id="fuelList" class="list"></div>
+        <div style="margin-bottom:12px">
+          <h3>Historial de Carreras</h3>
+          <div id="historialList" class="list"></div>
+          <div style="margin-top:8px" class="row">
+            <button onclick="loadHistorial()">Refrescar</button>
+            <button class="secondary" id="btnPDF" onclick="exportPDF()">Exportar PDF</button>
+          </div>
+        </div>
+
+        <div>
+          <h3>Precios de Combustible</h3>
+          <div id="fuelList" class="list"></div>
+        </div>
       </div>
 
-      <div class="col-lg-4">
-        <h3>Totales acumulados</h3>
-        <div id="totales" class="list mb-3"></div>
+      <div>
+        <div style="margin-bottom:12px">
+          <h3>Totales acumulados</h3>
+          <div id="totales" class="list"></div>
+        </div>
 
-        <h3>Gráfico (gastos vs neto)</h3>
-        <canvas id="grafico" style="max-width:100%;height:240px;background:#fff;padding:8px;border-radius:8px"></canvas>
+        <div>
+          <h3>Gráfico (gastos vs neto)</h3>
+          <canvas id="grafico" style="max-width:100%;height:240px;background:var(--canvas-bg);padding:8px;border-radius:8px;border:1px solid var(--border-color); transition: background-color 0.3s ease, border-color 0.3s ease;"></canvas>
+        </div>
       </div>
     </div>
 
-    <footer class="text-center text-muted small mt-3">
-      SIGRA • LocalStorage • Desarrollo local
-    </footer>
+    <footer>SIGRA • LocalStorage • Desarrollo local</footer>
   </div>
 </div>
 
-<!-- Modal sesiones -->
-<div class="modal fade" id="sessionsModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-3">
-      <h3>Historial de sesiones</h3>
-      <div id="sessionsList" class="list"></div>
-      <div class="text-center mt-2">
-        <button class="btn btn-secondary" onclick="closeSessions()">Cerrar</button>
-      </div>
-    </div>
+<div class="modal" id="sessionsModal">
+  <div class="content">
+    <h3>Historial de sesiones</h3>
+    <div id="sessionsList" class="list"></div>
+    <div style="text-align:center;margin-top:8px"><button onclick="closeSessions()">Cerrar</button></div>
   </div>
 </div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Modal de Términos y Condiciones -->
+<div class="modal" id="termsModal">
+  <div class="content" style="max-width:800px">
+    <h3 style="color:var(--primary); text-align:center;">TÉRMINOS Y CONDICIONES DE USO</h3>
+    <div class="terms-content">
+      <p><strong>Bienvenido a nuestra página. Al utilizar esta página, usted acepta los siguientes términos y condiciones. Lea atentamente antes de continuar.</strong></p>
+      
+      <p><strong>1. Protección de datos personales</strong><br>
+      La página se compromete a resguardar toda información personal proporcionada por los usuarios, incluyendo nombres, correos electrónicos, datos de contacto y financieros. Bajo ninguna circunstancia esta información será cedida, vendida o compartida con terceros, salvo que medie una orden judicial válida emitida por una institución jurídica competente.</p>
+      
+      <p><strong>2. Uso de la información</strong><br>
+      La información proporcionada será utilizada únicamente para mejorar la experiencia del usuario, permitir el acceso a funcionalidades de la página, y asegurar el correcto funcionamiento de los servicios ofrecidos.</p>
+      
+      <p><strong>3. Responsabilidad del usuario</strong><br>
+      El usuario se compromete a proporcionar información veraz y completa al registrarse y usar los servicios. Cualquier información falsa o incompleta puede resultar en la suspensión o eliminación de su cuenta.</p>
+      
+      <p><strong>4. Seguridad de la información</strong><br>
+      La página implementa medidas de seguridad técnicas y organizativas para proteger los datos del usuario frente a accesos no autorizados, pérdida, alteración o divulgación indebida. Sin embargo, el usuario reconoce que ningún sistema de almacenamiento o transmisión de datos es completamente infalible.</p>
+      
+      <p><strong>5. Acceso y uso del servicio</strong><br>
+      La página se reserva el derecho de modificar, suspender o interrumpir temporal o permanentemente los servicios, en cualquier momento y sin previo aviso.</p>
+      
+      <p><strong>6. Contenido de la página</strong><br>
+      Todo el contenido disponible en la página, incluyendo textos, gráficos, diseños, y funcionalidades, es propiedad de la página o de sus proveedores. Queda prohibida la reproducción, distribución o uso comercial sin autorización expresa.</p>
+      
+      <p><strong>7. Cumplimiento legal</strong><br>
+      Los usuarios se comprometen a utilizar la página únicamente para fines legales y de acuerdo con la legislación vigente. Cualquier uso indebido puede derivar en acciones legales y cierre de cuentas.</p>
+      
+      <p><strong>8. Modificaciones a los términos</strong><br>
+      La página puede actualizar estos términos y condiciones en cualquier momento. Los cambios serán efectivos inmediatamente después de su publicación en la página. Se recomienda revisar periódicamente los términos para mantenerse informado.</p>
+      
+      <p><strong>9. Aceptación de los términos</strong><br>
+      Al registrarse y utilizar la página, usted acepta explícitamente todos los términos y condiciones aquí descritos.</p>
+    </div>
+    <div class="terms-buttons">
+      <button onclick="acceptTermsAndRegister()" style="background:var(--primary); color:#0d1117;">Aceptar</button>
+      <button class="secondary" onclick="rejectTerms()">Rechazar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const USERS_KEY='sigra_users';
 const SESSIONS_KEY='sigra_sessions';
 const CARRERAS_KEY='sigra_carreras';
+const THEME_KEY='sigra_theme';
 const PRECIOS_COMBUSTIBLE={g95:0.938,g90:0.896,diesel:0.845};
 const sanitizeEmailKey=email=>email.trim().toLowerCase();
+
+let pendingRegistration = null;
+
+// Función para cambiar el tema
+function toggleTheme() {
+  const body = document.body;
+  const themeButton = document.querySelector('.theme-toggle');
+  
+  if (body.classList.contains('light-theme')) {
+    // Cambiar a tema oscuro
+    body.classList.remove('light-theme');
+    themeButton.textContent = '🌙';
+    localStorage.setItem(THEME_KEY, 'dark');
+  } else {
+    // Cambiar a tema claro
+    body.classList.add('light-theme');
+    themeButton.textContent = '☀️';
+    localStorage.setItem(THEME_KEY, 'light');
+  }
+}
+
+// Cargar tema guardado
+function loadTheme() {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const body = document.body;
+  const themeButtons = document.querySelectorAll('.theme-toggle');
+  
+  if (savedTheme === 'light') {
+    body.classList.add('light-theme');
+    themeButtons.forEach(btn => btn.textContent = '☀️');
+  } else {
+    body.classList.remove('light-theme');
+    themeButtons.forEach(btn => btn.textContent = '🌙');
+  }
+}
 
 function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
 function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
@@ -184,22 +385,81 @@ function doLogin(){
   recordSession(email);
   showAppForUser(email);
 }
+
+function openTerms(event) {
+  event.preventDefault();
+  document.getElementById('termsModal').classList.add('show');
+}
+
+function acceptTermsAndRegister() {
+  document.getElementById('termsModal').classList.remove('show');
+  if (pendingRegistration) {
+    proceedWithRegistration();
+  } else {
+    document.getElementById('acceptTerms').checked = true;
+  }
+}
+
+function rejectTerms() {
+  document.getElementById('termsModal').classList.remove('show');
+  pendingRegistration = null;
+  document.getElementById('acceptTerms').checked = false;
+}
+
 function createAccount(){
   const name=document.getElementById('regName').value.trim();
   const last=document.getElementById('regLast').value.trim();
   const email=sanitizeEmailKey(document.getElementById('regEmail').value);
   const pass=document.getElementById('regPass').value;
   const pass2=document.getElementById('regPass2').value;
+  
   if(!name||!last||!email||!pass){alert('Completa todos los campos');return}
-  if(pass!==pass2){alert('Las contraseñas no coinciden');return}
+
+  // ✅ Validación de correo
+  if(!email.endsWith("@gmail.com")){
+    alert("El correo debe ser una dirección válida de Gmail (ejemplo@gmail.com)");
+    return;
+  }
+
+  // ✅ Validación de contraseña mínima
+  if(pass.length < 4){
+    alert("La contraseña debe tener al menos 4 caracteres");
+    return;
+  }
+
+  // ✅ Confirmar contraseñas
+  if(pass!==pass2){
+    alert('Las contraseñas no coinciden');
+    return;
+  }
+
+  if(!document.getElementById('acceptTerms').checked){
+    pendingRegistration = {name, last, email, pass};
+    openTerms(new Event('click'));
+    return;
+  }
+
+  proceedWithRegistration();
+}
+
+function proceedWithRegistration() {
+  const data = pendingRegistration || {
+    name: document.getElementById('regName').value.trim(),
+    last: document.getElementById('regLast').value.trim(),
+    email: sanitizeEmailKey(document.getElementById('regEmail').value),
+    pass: document.getElementById('regPass').value
+  };
+
   const users=readJSON(USERS_KEY);
-  if(users.find(u=>u.email===email)){alert('Ya existe una cuenta con ese correo');return}
-  users.push({name,last,email,password:hashPass(pass),created:new Date().toISOString()});
+  if(users.find(u=>u.email===data.email)){alert('Ya existe una cuenta con ese correo');return}
+  users.push({name:data.name,last:data.last,email:data.email,password:hashPass(data.pass),created:new Date().toISOString()});
   writeJSON(USERS_KEY,users);
   alert('Cuenta creada. Ya puedes iniciar sesión.');
   updateUserCount();
   showLogin();
+  pendingRegistration = null;
 }
+
 function updateUserCount(){document.getElementById('userCount').innerText=readJSON(USERS_KEY).length}
 function doLogout(){localStorage.removeItem('sigra_current');location.reload()}
 function recordSession(email){const arr=readJSON(SESSIONS_KEY);arr.push({email,date:new Date().toISOString()});writeJSON(SESSIONS_KEY,arr)}
@@ -235,7 +495,7 @@ function calcular(){
   document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
 }
 
-function guardarCarrera(){
+function guardar(){
   const email=localStorage.getItem('sigra_current'); if(!email){alert('No estás logueado');return;}
   const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
   const gasolinaFija=getLastFuelPrice();
@@ -297,7 +557,7 @@ function renderChart(){
         datalabels:{
           anchor:'end',
           align:'top',
-          color:'#000',
+          color:'#fff',
           font:{weight:'bold'},
           formatter: val=>`$${val.toFixed(2)}`
         }
@@ -308,26 +568,200 @@ function renderChart(){
   });
 }
 
-function exportPDF(){
-  const { jsPDF }=window.jspdf;
-  const carreras=readJSON(CARRERAS_KEY).filter(c=>c.email===localStorage.getItem('sigra_current'));
-  if(!carreras.length){alert('No hay carreras para exportar');return;}
-  const doc=new jsPDF();
-  doc.setFontSize(18);
-  doc.text("Historial de Carreras - SIGRA",14,20);
-  const tableData=carreras.map(c=>[
-    new Date(c.date).toLocaleString(),
-    `$${c.tarifa.toFixed(2)}`,
-    `$${(c.gasolinaFija+c.gasolina).toFixed(2)}`,
-    `$${c.pagoCarro.toFixed(2)}`,
-    `$${c.mantenimiento.toFixed(2)}`,
-    `$${c.otros.toFixed(2)}`,
-    `$${c.neto.toFixed(2)}`
-  ]);
-  doc.autoTable({startY:30, head:[['Fecha','Tarifa','Gasolina','Pago carro','Mantenimiento','Otros','Neto']], body:tableData});
-  doc.save('historial_SIGRA.pdf');
-}
+function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const carreras = readJSON(CARRERAS_KEY).filter(c => c.email === localStorage.getItem('sigra_current'));
+    
+    if (!carreras.length) {
+        alert('No hay carreras para exportar');
+        return;
+    }
 
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    // Colores profesionales
+    const primaryColor = [41, 128, 185];    // Azul profesional
+    const secondaryColor = [52, 73, 94];    // Gris oscuro
+    const accentColor = [231, 76, 60];      // Rojo para resaltar
+    const lightGray = [236, 240, 241];      // Gris claro para fondos
+
+    // === ENCABEZADO PROFESIONAL ===
+    // Fondo del encabezado
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Logo/Icono simulado (círculo con iniciales)
+    doc.setFillColor(255, 255, 255);
+    doc.circle(20, 17, 8, 'F');
+    doc.setFontSize(12);
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.text("SG", 16.5, 20.5);
+
+    // Título principal
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text("HISTORIAL DE CARRERAS", 35, 18);
+
+    // Subtítulo
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text("Sistema Integral de Gestión de Rutas y Análisis", 35, 26);
+
+    // === INFORMACIÓN DEL REPORTE ===
+    const currentDate = new Date().toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    doc.setTextColor(...secondaryColor);
+    doc.setFontSize(10);
+    doc.text(`Generado el: ${currentDate}`, 14, 45);
+    doc.text(`Total de registros: ${carreras.length}`, 14, 52);
+    doc.text(`Usuario: ${localStorage.getItem('sigra_current') || 'N/A'}`, 14, 59);
+
+    // Línea separadora
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(0.5);
+    doc.line(14, 65, pageWidth - 14, 65);
+
+    // === CÁLCULOS DE RESUMEN ===
+    const totales = carreras.reduce((acc, carrera) => ({
+        tarifa: acc.tarifa + carrera.tarifa,
+        gasolina: acc.gasolina + (carrera.gasolinaFija + carrera.gasolina),
+        pagoCarro: acc.pagoCarro + carrera.pagoCarro,
+        mantenimiento: acc.mantenimiento + carrera.mantenimiento,
+        otros: acc.otros + carrera.otros,
+        neto: acc.neto + carrera.neto
+    }), { tarifa: 0, gasolina: 0, pagoCarro: 0, mantenimiento: 0, otros: 0, neto: 0 });
+
+    // === TABLA DE DATOS ===
+    const tableData = carreras.map((c, index) => [
+        (index + 1).toString(), // Número de fila
+        new Date(c.date).toLocaleDateString('es-ES'),
+        new Date(c.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+        `$${c.tarifa.toFixed(2)}`,
+        `$${(c.gasolinaFija + c.gasolina).toFixed(2)}`,
+        `$${c.pagoCarro.toFixed(2)}`,
+        `$${c.mantenimiento.toFixed(2)}`,
+        `$${c.otros.toFixed(2)}`,
+        `$${c.neto.toFixed(2)}`
+    ]);
+
+    // Configuración de la tabla principal
+    doc.autoTable({
+        startY: 75,
+        head: [['#', 'Fecha', 'Hora', 'Tarifa', 'Gasolina', 'Pago Carro', 'Mantenimiento', 'Otros', 'Neto']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+            fillColor: primaryColor,
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        bodyStyles: {
+            fontSize: 8,
+            textColor: secondaryColor
+        },
+        alternateRowStyles: {
+            fillColor: [248, 249, 250]
+        },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 12 },
+            1: { halign: 'center', cellWidth: 25 },
+            2: { halign: 'center', cellWidth: 18 },
+            3: { halign: 'right', cellWidth: 22 },
+            4: { halign: 'right', cellWidth: 22 },
+            5: { halign: 'right', cellWidth: 22 },
+            6: { halign: 'right', cellWidth: 25 },
+            7: { halign: 'right', cellWidth: 18 },
+            8: { halign: 'right', cellWidth: 22, fontStyle: 'bold', textColor: accentColor }
+        },
+        margin: { left: 14, right: 14 }
+    });
+
+    // === TABLA DE TOTALES ===
+    const finalY = doc.lastAutoTable.finalY + 10;
+    
+    // Título de resumen
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...secondaryColor);
+    doc.text("RESUMEN FINANCIERO", 14, finalY);
+
+    const resumenData = [
+        ['Total Ingresos (Tarifas)', `$${totales.tarifa.toFixed(2)}`],
+        ['Total Gasolina', `$${totales.gasolina.toFixed(2)}`],
+        ['Total Pago Carro', `$${totales.pagoCarro.toFixed(2)}`],
+        ['Total Mantenimiento', `$${totales.mantenimiento.toFixed(2)}`],
+        ['Total Otros Gastos', `$${totales.otros.toFixed(2)}`],
+        ['GANANCIA NETA TOTAL', `$${totales.neto.toFixed(2)}`]
+    ];
+
+    doc.autoTable({
+        startY: finalY + 8,
+        body: resumenData,
+        theme: 'plain',
+        bodyStyles: {
+            fontSize: 11,
+            textColor: secondaryColor
+        },
+        columnStyles: {
+            0: { 
+                fontStyle: 'bold',
+                cellWidth: 100,
+                halign: 'left'
+            },
+            1: { 
+                fontStyle: 'bold',
+                cellWidth: 40,
+                halign: 'right'
+            }
+        },
+        didParseCell: function(data) {
+            // Resaltar la fila de ganancia neta
+            if (data.row.index === resumenData.length - 1) {
+                data.cell.styles.fillColor = primaryColor;
+                data.cell.styles.textColor = [255, 255, 255];
+                data.cell.styles.fontSize = 12;
+            }
+        },
+        margin: { left: 14, right: 14 }
+    });
+
+    // === PIE DE PÁGINA ===
+    const finalFooterY = doc.lastAutoTable.finalY + 20;
+    
+    // Línea separadora del pie
+    doc.setDrawColor(...lightGray);
+    doc.setLineWidth(0.3);
+    doc.line(14, finalFooterY, pageWidth - 14, finalFooterY);
+
+    // Información del pie
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.setFont("helvetica", "normal");
+    doc.text("SIGRA - Sistema Integral de Gestión de Rutas y Análisis", 14, finalFooterY + 8);
+    doc.text(`Reporte generado automáticamente el ${currentDate}`, 14, finalFooterY + 15);
+    
+    // Número de página
+    doc.text(`Página 1`, pageWidth - 30, finalFooterY + 8);
+
+    // === GUARDAR ARCHIVO ===
+    const fileName = `SIGRA_Historial_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+
+    // Mensaje de confirmación
+    console.log(`PDF generado exitosamente: ${fileName}`);
+}
 function showAppForUser(email){
   document.getElementById('authWrap').style.display='none';
   document.getElementById('appWrap').style.display='block';
@@ -336,6 +770,9 @@ function showAppForUser(email){
 }
 
 window.addEventListener('load',()=>{
+  // Cargar tema guardado
+  loadTheme();
+  
   setTimeout(()=>{
     document.getElementById('splash').style.opacity=0;
     setTimeout(()=>{
