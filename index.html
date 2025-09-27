@@ -178,8 +178,8 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
       <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
     </div>
     <div id="loginView">
-      <input id="loginEmail" type="email" placeholder="Correo" />
-      <input id="loginPass" type="password" placeholder="Contraseña" />
+      <input id="loginEmail" type="email" placeholder="Correo" required />
+      <input id="loginPass" type="password" placeholder="Contraseña" minlength="4" required />
       <div class="row">
         <button onclick="doLogin()">Entrar</button>
         <button class="secondary" onclick="showRegister()">Crear Cuenta</button>
@@ -192,11 +192,11 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
         <input id="regName" placeholder="Nombre" />
         <input id="regLast" placeholder="Apellido" />
       </div>
-      <input id="regEmail" type="email" placeholder="Correo" />
-      <input id="regPass" type="password" placeholder="Contraseña" />
-      <input id="regPass2" type="password" placeholder="Confirmar Contraseña" />
+      <input id="regEmail" type="email" placeholder="Correo" required />
+  <input id="regPass" type="password" minlength="4" placeholder="Contraseña" required />
+  <input id="regPass2" type="password" minlength="4" placeholder="Confirmar Contraseña" required />
       <div style="margin:8px 0" class="terms-checkbox">
-        <input id="acceptTerms" type="checkbox" />
+        <input id="acceptTerms" type="checkbox" required />
         <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
       </div>
       <div class="row">
@@ -226,23 +226,26 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
     <div class="grid">
       <div>
         <div style="margin-bottom:12px">
-          <h3>Calcular Ganancia</h3>
-          <div class="row">
-            <input id="tarifa" placeholder="Tarifa (ganancia) $" />
-            <input id="tiempo" placeholder="Tiempo (h)" />
-          </div>
-          <div class="row">
-            <input id="pagoCarro" placeholder="Pago carro $" />
-            <input id="gasolina" placeholder="Gasolina $" />
-          </div>
-          <div class="row">
-            <input id="mantenimiento" placeholder="Mantenimiento $" />
-            <input id="otros" placeholder="Otros gastos $" />
-          </div>
-          <div class="row">
-            <button onclick="calcular()">Calcular</button>
-            <button class="secondary" onclick="guardar()">Guardar </button>
-          </div>
+          <<div style="margin-bottom:12px">
+  <h3>Calcular Ganancia</h3>
+  <div class="row">
+    <input id="tarifa" type="number" step="0.01" min="0" placeholder="Tarifa (ganancia) $" required />
+    <input id="tiempo" type="number" step="0.01" min="0" placeholder="Tiempo (h)" required />
+  </div>
+  <div class="row">
+    <input id="pagoCarro" type="number" step="0.01" min="0" placeholder="Pago carro $" required />
+    <input id="gasolina" type="number" step="0.01" min="0" placeholder="Gasolina $" required />
+  </div>
+  <div class="row">
+    <input id="mantenimiento" type="number" step="0.01" min="0" placeholder="Mantenimiento $" required />
+    <input id="otros" type="number" step="0.01" min="0" placeholder="Otros gastos $" required />
+  </div>
+  <div class="row">
+    <button onclick="calcular()">Calcular</button>
+    <button class="secondary" onclick="guardar()">Guardar </button>
+  </div>
+  <div id="resultado" class="list" style="margin-top:8px"></div>
+</div>
           <div id="resultado" class="list" style="margin-top:8px"></div>
         </div>
 
@@ -798,4 +801,5 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
+
 
