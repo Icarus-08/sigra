@@ -179,7 +179,7 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
     </div>
     <div id="loginView">
       <input id="loginEmail" type="email" placeholder="Correo" required />
-      <input id="loginPass" type="password" placeholder="Contraseña" minlength="6" required />
+      <input id="loginPass" type="password" placeholder="Contraseña" minlength="4" required />
       <div class="row">
         <button onclick="doLogin()">Entrar</button>
         <button class="secondary" onclick="showRegister()">Crear Cuenta</button>
@@ -250,7 +250,7 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
         </div>
 
         <div style="margin-bottom:12px">
-          <h3>Historial</h3>
+          <h3>Historial de Carreras</h3>
           <div id="historialList" class="list"></div>
           <div style="margin-top:8px" class="row">
             <button onclick="loadHistorial()">Refrescar</button>
@@ -271,7 +271,7 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
         </div>
 
         <div>
-          <h3>Gráfico (Ganancia Vs Gastos)</h3>
+          <h3>Gráfico (gastos vs neto)</h3>
           <canvas id="grafico" style="max-width:100%;height:240px;background:var(--canvas-bg);padding:8px;border-radius:8px;border:1px solid var(--border-color); transition: background-color 0.3s ease, border-color 0.3s ease;"></canvas>
         </div>
       </div>
@@ -294,7 +294,7 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
   <div class="content" style="max-width:800px">
     <h3 style="color:var(--primary); text-align:center;">TÉRMINOS Y CONDICIONES DE USO</h3>
     <div class="terms-content">
-<p><strong>Bienvenido a nuestra página. Al utilizar esta página, usted acepta los siguientes términos y condiciones. Lea atentamente antes de continuar.</strong></p>
+      <p><strong>Bienvenido a nuestra página. Al utilizar esta página, usted acepta los siguientes términos y condiciones. Lea atentamente antes de continuar.</strong></p>
       
       <p><strong>1. Protección de datos personales</strong><br>
       La página se compromete a resguardar toda información personal proporcionada por los usuarios, incluyendo nombres, correos electrónicos, datos de contacto y financieros. Bajo ninguna circunstancia esta información será cedida, vendida o compartida con terceros, salvo que medie una orden judicial válida emitida por una institución jurídica competente.</p>
@@ -489,56 +489,51 @@ function loadFuelPrices(){
 
 function calcular(){
   const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const pagoCarro=parseFloat(document.getElementById('pagoCarro').value)||0;
-  const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-  const otros=parseFloat(document.getElementById('otros').value)||0;
-
-  // 🚫 gasolina fuera del cálculo
-  const neto=tarifa-(pagoCarro+mantenimiento+otros);
-
-  document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
-}
-
-function guardar(){
-  const email=localStorage.getItem('sigra_current'); 
-  if(!email){alert('No estás logueado');return;}
-
-  const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const gasolinaFija=getLastFuelPrice(); // solo visual
+  const gasolinaFija=getLastFuelPrice();
   const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
   const pagoCarro=parseFloat(document.getElementById('pagoCarro').value)||0;
   const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
   const otros=parseFloat(document.getElementById('otros').value)||0;
+  const neto=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
+  document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
+}
 
-  // 🚫 neto sin gasolina
-  const neto=tarifa-(pagoCarro+mantenimiento+otros);
-
+function guardar(){
+  const email=localStorage.getItem('sigra_current'); if(!email){alert('No estás logueado');return;}
+  const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
+  const gasolinaFija=getLastFuelPrice();
+  const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
+  const pagoCarro=parseFloat(document.getElementById('pagoCarro').value)||0;
+  const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
+  const otros=parseFloat(document.getElementById('otros').value)||0;
+  const neto=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
   const arr=readJSON(CARRERAS_KEY);
   arr.push({email,date:new Date().toISOString(),tarifa,gasolinaFija,gasolina,pagoCarro,mantenimiento,otros,neto});
   writeJSON(CARRERAS_KEY,arr);
-
-  loadHistorial(); 
-  loadTotals(); 
-  renderChart();
+  loadHistorial(); loadTotals(); renderChart();
   alert('Guardado');
 }
 
-function loadTotals(){
-  const arr=readJSON(CARRERAS_KEY); 
+function loadHistorial(){
+  const arr=readJSON(CARRERAS_KEY); const el=document.getElementById('historialList'); el.innerHTML='';
   const current=localStorage.getItem('sigra_current');
+  arr.filter(x=>x.email===current).slice().reverse().forEach(c=>{
+    const d=new Date(c.date);
+    const row=document.createElement('div');
+    row.innerText=`${d.toLocaleDateString()} — Neto: $${c.neto.toFixed(2)}`;
+    el.appendChild(row);
+  })
+}
 
+function loadTotals(){
+  const arr=readJSON(CARRERAS_KEY); const current=localStorage.getItem('sigra_current');
   const totales=arr.filter(x=>x.email===current).reduce((acc,v)=>{
-    acc.neto+=v.neto; 
-    acc.gasolina+=v.gasolinaFija+v.gasolina; // 👀 solo informativo
-    acc.carro+=v.pagoCarro; 
-    acc.mantenimiento+=v.mantenimiento; 
-    acc.otros+=v.otros;
+    acc.neto+=v.neto; acc.gasolina+=v.gasolinaFija+v.gasolina; acc.carro+=v.pagoCarro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
     return acc;
   },{neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0});
-
   const el=document.getElementById('totales');
   el.innerHTML=`<div>Neto: $${totales.neto.toFixed(2)}</div>
-                <div>Gasolina (visual): $${totales.gasolina.toFixed(2)}</div>
+                <div>Gasolina: $${totales.gasolina.toFixed(2)}</div>
                 <div>Pago carro: $${totales.carro.toFixed(2)}</div>
                 <div>Mantenimiento: $${totales.mantenimiento.toFixed(2)}</div>
                 <div>Otros: $${totales.otros.toFixed(2)}</div>`;
@@ -794,7 +789,15 @@ function showAppForUser(email){
 window.addEventListener('load',()=>{
   // Cargar tema guardado
   loadTheme();
-
+  
+  setTimeout(()=>{
+    document.getElementById('splash').style.opacity=0;
+    setTimeout(()=>{
+      document.getElementById('splash').style.display='none';
+      updateUserCount();
+    },500)
+  },1500)
+})
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -817,52 +820,5 @@ const db = getFirestore(app);
 
 console.log("✅ Firebase conectado", app.name);
 </script>
-  <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const splash = document.getElementById("splash");
-  const authWrap = document.getElementById("authWrap");
-  const appWrap = document.getElementById("appWrap");
-
-  // Seguridad: primero oculta todo
-  authWrap.style.display = "none";
-  appWrap.style.display = "none";
-
-  // Mostrar splash y luego quitarlo
-  setTimeout(() => {
-    if (splash) splash.style.display = "none";
-
-    const current = localStorage.getItem("sigra_current");
-    if (current) {
-      // Si hay sesión activa
-      showAppForUser(current);
-    } else {
-      // Si no hay sesión, mostrar login
-      authWrap.style.display = "flex";
-    }
-  }, 2000); // 2s
-});
-
-function showAppForUser(email) {
-  const authWrap = document.getElementById("authWrap");
-  const appWrap = document.getElementById("appWrap");
-
-  if (authWrap) authWrap.style.display = "none";
-  if (appWrap) appWrap.style.display = "block";
-
-  document.getElementById("currentUserLabel").textContent = email;
-
-  // inicializaciones
-  loadFuelPrices();
-  loadHistorial();
-  loadTotals();
-  renderChart();
-  updateUserCount();
-  loadTheme();
-}
-</script>
 </body>
 </html>
-
-
-
-
