@@ -798,27 +798,7 @@ window.addEventListener('load',()=>{
     },500)
   },1500)
 })
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-// ⚠️ Reemplaza con tus datos de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCl55k6nUohSTnkcJvzc01ZtlIrgy7qIpI",
-  authDomain: "sigra-b1d1b.firebaseapp.com",
-  projectId: "sigra-b1d1b",
-  storageBucket: "sigra-b1d1b.firebasestorage.app",
-  messagingSenderId: "171804390742",
-  appId: "1:171804390742:web:d4f73b2ce921fd8bc252f7",
-  measurementId: "G-TXGV25GJRE"
-};
-
-// Inicializar
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-console.log("✅ Firebase conectado", app.name);
 </script>
 </body>
 </html>
+
