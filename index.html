@@ -1,824 +1,614 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIGRA - Gestor de Conductor 🚖</title>
-<!-- Fuente Hollow Knight-like -->
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-:root { 
-  --primary:#00ffa6; 
-  --secondary:#00b7ff; 
-  --bg:#0d1117; 
-  --card-bg:#161b22; 
-  --input-bg:#0d1117;
-  --list-bg:#0d1117;
-  --canvas-bg:#0d1117;
-  --border-color:#222;
-  --border-input:#333;
-  --text-color:#e6e6e6;
-  --text-muted:#888;
-  --text-small:#aaa;
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SIGRA - Gestor de Conductor 🚖</title>
 
-/* Tema claro */
-.light-theme {
-  --bg: #ffffff; /* Blanco hueso */
-  --card-bg: #ffffff; /* Tarjetas blancas */
-  --input-bg: #ffffff;
-  --list-bg: #f8f9fa;
-  --canvas-bg: #f8f9fa;
-  --border-color: #ddd;
-  --border-input: #ccc;
-  --text-color: #333333;
-  --text-muted: #666666;
-  --text-small: #555555;
-}
+  <!-- Fonts / CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-body { 
-  margin:0; 
-  font-family:'Cinzel', serif; 
-  background:var(--bg); 
-  color:var(--text-color); 
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
+  <style>
+    :root{
+      --primary:#00ffa6; --secondary:#00b7ff; --bg:#0d1117; --card-bg:#161b22;
+      --input-bg:#0d1117; --list-bg:#0d1117; --canvas-bg:#0d1117; --border-color:#222;
+      --border-input:#333; --text-color:#e6e6e6; --text-muted:#888; --text-small:#aaa;
+    }
+    .light-theme{ --bg:#fff; --card-bg:#fff; --input-bg:#fff; --list-bg:#f8f9fa; --canvas-bg:#f8f9fa; --border-color:#ddd; --border-input:#ccc; --text-color:#333; --text-muted:#666; --text-small:#555; }
 
-.splash { 
-  position:fixed; 
-  inset:0; 
-  display:flex; 
-  align-items:center; 
-  justify-content:center; 
-  background:black; 
-  color:var(--primary); 
-  font-size:3rem; 
-  letter-spacing:.5rem; 
-  z-index:30; 
-}
+    body{ margin:0; font-family:'Cinzel',serif; background:var(--bg); color:var(--text-color); transition: background-color .3s, color .3s; }
+    .splash{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; color:var(--primary); font-size:3rem; letter-spacing:.5rem; z-index:9999; }
+    .sigra span{ opacity:0; animation:fadeInLetter 2.5s forwards; }
+    @keyframes fadeInLetter{ from{opacity:0;filter:blur(4px)} to{opacity:1;filter:blur(0)} }
 
-.sigra span { 
-  opacity:0; 
-  animation:fadeInLetter 2.5s forwards; 
-}
-.sigra span:nth-child(1){animation-delay:0.2s;} 
-.sigra span:nth-child(2){animation-delay:0.3s;} 
-.sigra span:nth-child(3){animation-delay:0.4s;} 
-.sigra span:nth-child(4){animation-delay:0.5s;} 
-.sigra span:nth-child(5){animation-delay:0.6s;}
+    .center-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .card{ width:100%; max-width:920px; background:var(--card-bg); padding:1.25rem; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.5); border:1px solid var(--primary); }
+    .hidden{display:none;}
+    .row{display:flex; gap:12px;}
+    input,select,textarea,button{ font-size:15px; }
+    input,select,textarea{ width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid var(--border-input); background:var(--input-bg); color:var(--text-color); }
+    button{ padding:10px; border-radius:8px; background:var(--primary); color:#0d1117; border:none; cursor:pointer; font-weight:700; }
+    button.secondary{ background:var(--secondary); color:#0d1117; }
 
-@keyframes fadeInLetter { 
-  from {opacity:0; filter:blur(4px);} 
-  to {opacity:1; filter:blur(0);} 
-}
+    .theme-toggle{ background:#333; color:#fff; border-radius:50%; width:45px; height:45px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid #555; }
+    .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .small{ font-size:.9rem; color:var(--text-small); } .muted{ color:var(--text-muted); }
 
-.center-wrap { 
-  min-height:100vh; 
-  display:flex; 
-  align-items:center; 
-  justify-content:center; 
-  padding:1rem; 
-}
+    .grid{ display:grid; grid-template-columns:1fr 340px; gap:12px; }
+    .list{ max-height:260px; overflow:auto; padding:8px; background:var(--list-bg); border-radius:8px; border:1px solid var(--border-color); }
+    footer{ margin-top:12px; text-align:center; color:var(--text-muted); font-size:.85rem; }
 
-.card { 
-  width:100%; 
-  max-width:920px; 
-  background:var(--card-bg); 
-  padding:1.25rem; 
-  border-radius:12px; 
-  box-shadow:0 6px 20px rgba(0,0,0,.5); 
-  border:1px solid var(--primary);
-}
+    canvas { width:100% !important; height:240px !important; }
 
-.hidden{display:none;}
-h1,h2,h3{margin:.25rem 0;}
-.row{display:flex;gap:12px;}
-.col{flex:1;}
-input, select, button, textarea { 
-  width:100%; 
-  padding:10px; 
-  margin:6px 0; 
-  border-radius:8px; 
-  border:1px solid var(--border-input); 
-  font-size:15px;
-  background:var(--input-bg);
-  color:var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-button{
-  background:var(--primary); 
-  color:#0d1117; 
-  border:none; 
-  cursor:pointer; 
-  font-weight:bold;
-}
-button.secondary{
-  background:var(--secondary); 
-  color:#0d1117;
-}
+    .modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; visibility:hidden; opacity:0; transition:all .2s; z-index:2000; }
+    .modal.show{ visibility:visible; opacity:1; }
+    .modal .content{ background:var(--card-bg); padding:1rem; border-radius:10px; max-width:720px; max-height:80vh; overflow:auto; }
+  </style>
 
-/* Botón de tema */
-.theme-toggle {
-  background: #333;
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 50%;
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-  margin-left: 10px;
-}
+  <!-- Chart.js and plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
-.theme-toggle:hover {
-  background: #555;
-}
-
-.topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
-.small{font-size:.9rem; color:var(--text-small);}
-.muted{color:var(--text-muted);}
-.grid{display:grid; grid-template-columns:1fr 340px; gap:12px;}
-.list{max-height:260px; overflow:auto; padding:8px; background:var(--list-bg); border-radius:8px; border:1px solid var(--border-color); transition: background-color 0.3s ease, border-color 0.3s ease;}
-table{width:100%; border-collapse:collapse;}
-table td, table th{padding:6px; border-bottom:1px solid var(--border-color);}
-.actions{display:flex; gap:8px; align-items:center;}
-.pill{display:inline-block; padding:6px 10px; border-radius:999px; background:var(--list-bg); color:var(--primary); font-weight:600; border:1px solid var(--primary); transition: background-color 0.3s ease;}
-footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.85rem;}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-.modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; visibility:hidden; opacity:0; transition:all .2s; z-index:50;}
-.modal.show{visibility:visible; opacity:1;}
-.modal .content{background:var(--card-bg); padding:1rem; border-radius:10px; max-width:720px; max-height:80vh; overflow:auto; transition: background-color 0.3s ease;}
-.right{text-align:right;}
-.terms-content{max-height:400px; overflow-y:auto; background:var(--list-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin:10px 0; line-height:1.5; transition: background-color 0.3s ease, border-color 0.3s ease;}
-.terms-buttons{display:flex; gap:10px; justify-content:center; margin-top:15px;}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <!-- jsPDF + autotable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
+  <!-- Splash -->
+  <div class="splash" id="splash">
+    <div class="sigra"><span>S</span>.<span>I</span>.<span>G</span>.<span>R</span>.<span>A</span></div>
+  </div>
 
-<!-- Splash -->
-<div class="splash" id="splash">
-  <div class="sigra">
-    <span>S</span>.<span>I</span>.<span>G</span>.<span>R</span>.<span>A</span>
-  </div>
-</div>
+  <!-- AUTH -->
+  <div class="center-wrap" id="authWrap">
+    <div class="card" id="loginCard">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h1 style="color:var(--primary); margin:0">SIGRA</h1>
+        <button class="theme-toggle" id="themeTopBtn" title="Cambiar tema">🌙</button>
+      </div>
 
-<!-- Auth -->
-<div class="center-wrap" id="authWrap">
-  <div class="card" id="loginCard">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h1 style="color:var(--primary); margin: 0;">SIGRA</h1>
-      <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
-    </div>
-    <div id="loginView">
-      <input id="loginEmail" type="email" placeholder="Correo" required />
-      <input id="loginPass" type="password" placeholder="Contraseña" minlength="4" required />
-      <div class="row">
-        <button onclick="doLogin()">Entrar</button>
-        <button class="secondary" onclick="showRegister()">Crear Cuenta</button>
-      </div>
-      <p class="small muted">Al continuar aceptas nuestros <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></p>
-    </div>
-    <div id="registerView" class="hidden">
-      <h2>Crear Cuenta</h2>
-      <div class="row">
-        <input id="regName" placeholder="Nombre" />
-        <input id="regLast" placeholder="Apellido" />
-      </div>
-      <input id="regEmail" type="email" placeholder="Correo" required />
-  <input id="regPass" type="password" minlength="4" placeholder="Contraseña" required />
-  <input id="regPass2" type="password" minlength="4" placeholder="Confirmar Contraseña" required />
-      <div style="margin:8px 0" class="terms-checkbox">
-        <input id="acceptTerms" type="checkbox" required />
-        <label for="acceptTerms">He leído y acepto los <a href="#" onclick="openTerms(event)">Términos y Condiciones</a></label>
-      </div>
-      <div class="row">
-        <button onclick="createAccount()">Crear</button>
-        <button class="secondary" onclick="showLogin()">Volver</button>
-      </div>
-    </div>
-    <div style="margin-top:10px" class="small muted">Usuarios registrados: <span id="userCount">0</span></div>
-  </div>
-</div>
-
-<!-- App -->
-<div style="display:none;padding:18px" id="appWrap">
-  <div class="card">
-    <div class="topbar">
-      <div>
-        <h2 style="margin:0">Gestor de Conductor 🚖</h2>
-        <div class="small">Usuario: <span id="currentUserLabel" class="pill">-</span></div>
-      </div>
-      <div class="actions">
-        <button onclick="openSessions()" class="secondary">Ver sesiones</button>
-        <button id="btnLogout" class="secondary" onclick="doLogout()">Cerrar Sesión</button>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div>
-        <div style="margin-bottom:12px">
-          <div style="margin-bottom:12px">
-  <h3>Calcular Ganancia</h3>
-  <div class="row">
-    <input id="tarifa" type="number" step="0.01" min="0" placeholder="Tarifa (ganancia) $" required />
-    <input id="tiempo" type="number" step="0.01" min="0" placeholder="Tiempo (h)" required />
-  </div>
-  <div class="row">
-    <input id="pagoCarro" type="number" step="0.01" min="0" placeholder="Pago carro $" required />
-    <input id="gasolina" type="number" step="0.01" min="0" placeholder="Gasolina $" required />
-  </div>
-  <div class="row">
-    <input id="mantenimiento" type="number" step="0.01" min="0" placeholder="Mantenimiento $" required />
-    <input id="otros" type="number" step="0.01" min="0" placeholder="Otros gastos $" required />
-  </div>
-  <div class="row">
-    <button onclick="calcular()">Calcular</button>
-    <button class="secondary" onclick="guardar()">Guardar </button>
-  </div>
-  <div id="resultado" class="list" style="margin-top:8px"></div>
-</div>
-          <div id="resultado" class="list" style="margin-top:8px"></div>
+      <div id="loginView">
+        <input id="loginEmail" type="email" placeholder="Correo (Gmail)" />
+        <input id="loginPass" type="password" placeholder="Contraseña" minlength="4" />
+        <div class="row">
+          <button id="btnLogin">Entrar</button>
+          <button class="secondary" id="btnShowRegister">Crear Cuenta</button>
         </div>
+        <p class="small muted">Al continuar aceptas nuestros <a href="#" id="linkTerms">Términos y Condiciones</a></p>
+      </div>
 
-        <div style="margin-bottom:12px">
-          <h3>Historial de Carreras</h3>
-          <div id="historialList" class="list"></div>
-          <div style="margin-top:8px" class="row">
-            <button onclick="loadHistorial()">Refrescar</button>
-            <button class="secondary" id="btnPDF" onclick="exportPDF()">Exportar PDF</button>
-          </div>
+      <div id="registerView" class="hidden">
+        <h2>Crear Cuenta</h2>
+        <div class="row">
+          <input id="regName" placeholder="Nombre" />
+          <input id="regLast" placeholder="Apellido" />
         </div>
+        <input id="regEmail" type="email" placeholder="Correo (Gmail)" />
+        <input id="regPass" type="password" placeholder="Contraseña" minlength="4" />
+        <input id="regPass2" type="password" placeholder="Confirmar Contraseña" minlength="4" />
+        <div style="margin:8px 0">
+          <input id="acceptTerms" type="checkbox" />
+          <label for="acceptTerms">He leído y acepto los <a href="#" id="linkTerms2">Términos y Condiciones</a></label>
+        </div>
+        <div class="row">
+          <button id="btnCreate">Crear</button>
+          <button class="secondary" id="btnBackLogin">Volver</button>
+        </div>
+      </div>
 
+      <div style="margin-top:10px" class="small muted">Usuarios registrados (local): <span id="userCount">0</span></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div style="display:none; padding:18px" id="appWrap">
+    <div class="card">
+      <div class="topbar">
         <div>
-          <h3>Precios de Combustible</h3>
+          <h2 style="margin:0">Gestor de Conductor 🚖</h2>
+          <div class="small">Usuario: <span id="currentUserLabel" class="pill">-</span></div>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="btnSessions">Ver sesiones</button>
+          <button class="secondary" id="btnLogout">Cerrar Sesión</button>
+          <button class="theme-toggle" id="themeAppBtn">🌙</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <h3>Calcular Ganancia</h3>
+          <div class="row">
+            <input id="tarifa" type="number" step="0.01" min="0" placeholder="Tarifa (ganancia) $" />
+            <input id="tiempo" type="number" step="0.01" min="0" placeholder="Tiempo (h)" />
+          </div>
+          <div class="row">
+            <input id="pagoCarro" type="number" step="0.01" min="0" placeholder="Pago carro $" />
+            <input id="gasolina" type="number" step="0.01" min="0" placeholder="Gasolina (solo visual) $" />
+          </div>
+          <div class="row">
+            <input id="mantenimiento" type="number" step="0.01" min="0" placeholder="Mantenimiento $" />
+            <input id="otros" type="number" step="0.01" min="0" placeholder="Otros gastos $" />
+          </div>
+          <div class="row">
+            <button id="btnCalcular">Calcular</button>
+            <button class="secondary" id="btnGuardar">Guardar</button>
+          </div>
+          <div id="resultado" class="list" style="margin-top:8px"></div>
+
+          <h3 style="margin-top:14px">Historial de Carreras</h3>
+          <div id="historialList" class="list"></div>
+          <div class="row" style="margin-top:8px">
+            <button id="btnRefresh">Refrescar</button>
+            <button class="secondary" id="btnPDF">Exportar PDF</button>
+          </div>
+
+          <h3 style="margin-top:14px">Precios de Combustible</h3>
           <div id="fuelList" class="list"></div>
         </div>
-      </div>
-
-      <div>
-        <div style="margin-bottom:12px">
-          <h3>Totales acumulados</h3>
-          <div id="totales" class="list"></div>
-        </div>
 
         <div>
-          <h3>Gráfico (gastos vs neto)</h3>
-          <canvas id="grafico" style="max-width:100%;height:240px;background:var(--canvas-bg);padding:8px;border-radius:8px;border:1px solid var(--border-color); transition: background-color 0.3s ease, border-color 0.3s ease;"></canvas>
+          <h3>Totales acumulados</h3>
+          <div id="totales" class="list"></div>
+
+          <h3 style="margin-top:12px">Gráfico (gastos vs neto)</h3>
+          <canvas id="grafico"></canvas>
         </div>
       </div>
+
+      <footer>SIGRA • Firestore • Desarrollo local</footer>
     </div>
-
-    <footer>SIGRA • LocalStorage • Desarrollo local</footer>
   </div>
-</div>
 
-<div class="modal" id="sessionsModal">
-  <div class="content">
+  <!-- Sessions modal -->
+  <div class="modal" id="sessionsModal"><div class="content">
     <h3>Historial de sesiones</h3>
     <div id="sessionsList" class="list"></div>
-    <div style="text-align:center;margin-top:8px"><button onclick="closeSessions()">Cerrar</button></div>
-  </div>
-</div>
+    <div style="text-align:center;margin-top:8px"><button id="closeSessionsBtn">Cerrar</button></div>
+  </div></div>
 
-<!-- Modal de Términos y Condiciones -->
-<div class="modal" id="termsModal">
-  <div class="content" style="max-width:800px">
-    <h3 style="color:var(--primary); text-align:center;">TÉRMINOS Y CONDICIONES DE USO</h3>
+  <!-- Terms modal -->
+  <div class="modal" id="termsModal"><div class="content">
+    <h3 style="color:var(--primary); text-align:center">TÉRMINOS Y CONDICIONES</h3>
     <div class="terms-content">
-      <p><strong>Bienvenido a nuestra página. Al utilizar esta página, usted acepta los siguientes términos y condiciones. Lea atentamente antes de continuar.</strong></p>
-      
-      <p><strong>1. Protección de datos personales</strong><br>
-      La página se compromete a resguardar toda información personal proporcionada por los usuarios, incluyendo nombres, correos electrónicos, datos de contacto y financieros. Bajo ninguna circunstancia esta información será cedida, vendida o compartida con terceros, salvo que medie una orden judicial válida emitida por una institución jurídica competente.</p>
-      
-      <p><strong>2. Uso de la información</strong><br>
-      La información proporcionada será utilizada únicamente para mejorar la experiencia del usuario, permitir el acceso a funcionalidades de la página, y asegurar el correcto funcionamiento de los servicios ofrecidos.</p>
-      
-      <p><strong>3. Responsabilidad del usuario</strong><br>
-      El usuario se compromete a proporcionar información veraz y completa al registrarse y usar los servicios. Cualquier información falsa o incompleta puede resultar en la suspensión o eliminación de su cuenta.</p>
-      
-      <p><strong>4. Seguridad de la información</strong><br>
-      La página implementa medidas de seguridad técnicas y organizativas para proteger los datos del usuario frente a accesos no autorizados, pérdida, alteración o divulgación indebida. Sin embargo, el usuario reconoce que ningún sistema de almacenamiento o transmisión de datos es completamente infalible.</p>
-      
-      <p><strong>5. Acceso y uso del servicio</strong><br>
-      La página se reserva el derecho de modificar, suspender o interrumpir temporal o permanentemente los servicios, en cualquier momento y sin previo aviso.</p>
-      
-      <p><strong>6. Contenido de la página</strong><br>
-      Todo el contenido disponible en la página, incluyendo textos, gráficos, diseños, y funcionalidades, es propiedad de la página o de sus proveedores. Queda prohibida la reproducción, distribución o uso comercial sin autorización expresa.</p>
-      
-      <p><strong>7. Cumplimiento legal</strong><br>
-      Los usuarios se comprometen a utilizar la página únicamente para fines legales y de acuerdo con la legislación vigente. Cualquier uso indebido puede derivar en acciones legales y cierre de cuentas.</p>
-      
-      <p><strong>8. Modificaciones a los términos</strong><br>
-      La página puede actualizar estos términos y condiciones en cualquier momento. Los cambios serán efectivos inmediatamente después de su publicación en la página. Se recomienda revisar periódicamente los términos para mantenerse informado.</p>
-      
-      <p><strong>9. Aceptación de los términos</strong><br>
-      Al registrarse y utilizar la página, usted acepta explícitamente todos los términos y condiciones aquí descritos.</p>
+      <!-- texto reducido para ejemplo -->
+      <p>Al registrarte aceptas los términos...</p>
     </div>
-    <div class="terms-buttons">
-      <button onclick="acceptTermsAndRegister()" style="background:var(--primary); color:#0d1117;">Aceptar</button>
-      <button class="secondary" onclick="rejectTerms()">Rechazar</button>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:10px">
+      <button id="termsAcceptBtn">Aceptar</button>
+      <button id="termsRejectBtn" class="secondary">Rechazar</button>
     </div>
-  </div>
-</div>
+  </div></div>
 
-<script>
-const USERS_KEY='sigra_users';
-const SESSIONS_KEY='sigra_sessions';
-const CARRERAS_KEY='sigra_carreras';
-const THEME_KEY='sigra_theme';
-const PRECIOS_COMBUSTIBLE={g95:0.938,g90:0.896,diesel:0.845};
-const sanitizeEmailKey=email=>email.trim().toLowerCase();
+  <!-- Firebase + App logic (module) -->
+  <script type="module">
+  // ---------- Firebase imports ----------
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-let pendingRegistration = null;
-
-// Función para cambiar el tema
-function toggleTheme() {
-  const body = document.body;
-  const themeButton = document.querySelector('.theme-toggle');
-  
-  if (body.classList.contains('light-theme')) {
-    // Cambiar a tema oscuro
-    body.classList.remove('light-theme');
-    themeButton.textContent = '🌙';
-    localStorage.setItem(THEME_KEY, 'dark');
-  } else {
-    // Cambiar a tema claro
-    body.classList.add('light-theme');
-    themeButton.textContent = '☀️';
-    localStorage.setItem(THEME_KEY, 'light');
-  }
-}
-
-// Cargar tema guardado
-function loadTheme() {
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const body = document.body;
-  const themeButtons = document.querySelectorAll('.theme-toggle');
-  
-  if (savedTheme === 'light') {
-    body.classList.add('light-theme');
-    themeButtons.forEach(btn => btn.textContent = '☀️');
-  } else {
-    body.classList.remove('light-theme');
-    themeButtons.forEach(btn => btn.textContent = '🌙');
-  }
-}
-
-function readJSON(key){try{return JSON.parse(localStorage.getItem(key))||[]}catch(e){return []}}
-function writeJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
-function hashPass(p){return btoa(p)}
-function showRegister(){document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.remove('hidden')}
-function showLogin(){document.getElementById('registerView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}
-function doLogin(){
-  const email=sanitizeEmailKey(document.getElementById('loginEmail').value);
-  const pass=document.getElementById('loginPass').value;
-  const users=readJSON(USERS_KEY);
-  const u=users.find(x=>x.email===email);
-  if(!u||u.password!==hashPass(pass)){alert('Correo o contraseña incorrectos');return}
-  localStorage.setItem('sigra_current',email);
-  recordSession(email);
-  showAppForUser(email);
-}
-
-function openTerms(event) {
-  event.preventDefault();
-  document.getElementById('termsModal').classList.add('show');
-}
-
-function acceptTermsAndRegister() {
-  document.getElementById('termsModal').classList.remove('show');
-  if (pendingRegistration) {
-    proceedWithRegistration();
-  } else {
-    document.getElementById('acceptTerms').checked = true;
-  }
-}
-
-function rejectTerms() {
-  document.getElementById('termsModal').classList.remove('show');
-  pendingRegistration = null;
-  document.getElementById('acceptTerms').checked = false;
-}
-
-function createAccount(){
-  const name=document.getElementById('regName').value.trim();
-  const last=document.getElementById('regLast').value.trim();
-  const email=sanitizeEmailKey(document.getElementById('regEmail').value);
-  const pass=document.getElementById('regPass').value;
-  const pass2=document.getElementById('regPass2').value;
-  
-  if(!name||!last||!email||!pass){alert('Completa todos los campos');return}
-
-  // ✅ Validación de correo
-  if(!email.endsWith("@gmail.com")){
-    alert("El correo debe ser una dirección válida de Gmail (ejemplo@gmail.com)");
-    return;
-  }
-
-  // ✅ Validación de contraseña mínima
-  if(pass.length < 4){
-    alert("La contraseña debe tener al menos 4 caracteres");
-    return;
-  }
-
-  // ✅ Confirmar contraseñas
-  if(pass!==pass2){
-    alert('Las contraseñas no coinciden');
-    return;
-  }
-
-  if(!document.getElementById('acceptTerms').checked){
-    pendingRegistration = {name, last, email, pass};
-    openTerms(new Event('click'));
-    return;
-  }
-
-  proceedWithRegistration();
-}
-
-function proceedWithRegistration() {
-  const data = pendingRegistration || {
-    name: document.getElementById('regName').value.trim(),
-    last: document.getElementById('regLast').value.trim(),
-    email: sanitizeEmailKey(document.getElementById('regEmail').value),
-    pass: document.getElementById('regPass').value
+  // ---------- Your Firebase config (replace if needed) ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyCl55k6nUohSTnkcJvzc01ZtlIrgy7qIpI",
+    authDomain: "sigra-b1d1b.firebaseapp.com",
+    projectId: "sigra-b1d1b",
+    storageBucket: "sigra-b1d1b.firebasestorage.app",
+    messagingSenderId: "171804390742",
+    appId: "1:171804390742:web:d4f73b2ce921fd8bc252f7",
+    measurementId: "G-TXGV25GJRE"
   };
 
-  const users=readJSON(USERS_KEY);
-  if(users.find(u=>u.email===data.email)){alert('Ya existe una cuenta con ese correo');return}
-  users.push({name:data.name,last:data.last,email:data.email,password:hashPass(data.pass),created:new Date().toISOString()});
-  writeJSON(USERS_KEY,users);
-  alert('Cuenta creada. Ya puedes iniciar sesión.');
-  updateUserCount();
-  showLogin();
-  pendingRegistration = null;
-}
+  // ---------- Init ----------
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-function updateUserCount(){document.getElementById('userCount').innerText=readJSON(USERS_KEY).length}
-function doLogout(){localStorage.removeItem('sigra_current');location.reload()}
-function recordSession(email){const arr=readJSON(SESSIONS_KEY);arr.push({email,date:new Date().toISOString()});writeJSON(SESSIONS_KEY,arr)}
-function openSessions(){document.getElementById('sessionsModal').classList.add('show');renderSessions()}
-function closeSessions(){document.getElementById('sessionsModal').classList.remove('show')}
-function renderSessions(){
-  const arr=readJSON(SESSIONS_KEY);const el=document.getElementById('sessionsList');el.innerHTML='';
-  if(!arr.length){el.innerHTML='<div class="small muted">No hay sesiones</div>';return}
-  arr.slice().reverse().forEach(s=>{
-    const d=new Date(s.date);
-    const row=document.createElement('div');
-    row.innerText=`${s.email} — ${d.toLocaleString()}`;
-    el.appendChild(row);
-  })
-}
+  // Register Chart DataLabels plugin
+  Chart.register(ChartDataLabels);
 
-function getLastFuelPrice(){return PRECIOS_COMBUSTIBLE.g95}
-function loadFuelPrices(){
-  const el=document.getElementById('fuelList');
-  el.innerHTML=`<div>95: $${PRECIOS_COMBUSTIBLE.g95.toFixed(2)}</div>
-                <div>90: $${PRECIOS_COMBUSTIBLE.g90.toFixed(2)}</div>
-                <div>Diésel: $${PRECIOS_COMBUSTIBLE.diesel.toFixed(2)}</div>`;
-}
+  // ---------- Constants / state ----------
+  const PRECIOS_COMBUSTIBLE = { g95: 0.938, g90: 0.896, diesel: 0.845 };
 
-function calcular(){
-  const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const gasolinaFija=getLastFuelPrice();
-  const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
-  const pagoCarro=parseFloat(document.getElementById('pagoCarro').value)||0;
-  const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-  const otros=parseFloat(document.getElementById('otros').value)||0;
-  const neto=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
-  document.getElementById('resultado').innerText='Ganancia estimada: $'+neto.toFixed(2);
-}
+  // ---------- Helper DOM ----------
+  const $ = id => document.getElementById(id);
 
-function guardar(){
-  const email=localStorage.getItem('sigra_current'); if(!email){alert('No estás logueado');return;}
-  const tarifa=parseFloat(document.getElementById('tarifa').value)||0;
-  const gasolinaFija=getLastFuelPrice();
-  const gasolina=parseFloat(document.getElementById('gasolina').value)||0;
-  const pagoCarro=parseFloat(document.getElementById('pagoCarro').value)||0;
-  const mantenimiento=parseFloat(document.getElementById('mantenimiento').value)||0;
-  const otros=parseFloat(document.getElementById('otros').value)||0;
-  const neto=tarifa-(gasolinaFija+gasolina+pagoCarro+mantenimiento+otros);
-  const arr=readJSON(CARRERAS_KEY);
-  arr.push({email,date:new Date().toISOString(),tarifa,gasolinaFija,gasolina,pagoCarro,mantenimiento,otros,neto});
-  writeJSON(CARRERAS_KEY,arr);
-  loadHistorial(); loadTotals(); renderChart();
-  alert('Guardado');
-}
+  // ---------- UI init ----------
+  // Elements
+  const authWrap = $('authWrap'), appWrap = $('appWrap'), splash = $('splash');
+  const loginView = $('loginView'), registerView = $('registerView');
+  const btnLogin = $('btnLogin'), btnShowRegister = $('btnShowRegister'), btnCreate = $('btnCreate'), btnBackLogin = $('btnBackLogin');
+  const btnCalcular = $('btnCalcular'), btnGuardar = $('btnGuardar'), btnRefresh = $('btnRefresh'), btnPDF = $('btnPDF');
+  const btnLogout = $('btnLogout'), btnSessions = $('btnSessions');
+  const resultadoEl = $('resultado'), historialList = $('historialList'), fuelList = $('fuelList'), totalesEl = $('totales');
+  const currentUserLabel = $('currentUserLabel'), userCountEl = $('userCount');
+  const sessionsModal = $('sessionsModal'), sessionsList = $('sessionsList'), closeSessionsBtn = $('closeSessionsBtn');
+  const termsModal = $('termsModal'), termsAcceptBtn = $('termsAcceptBtn'), termsRejectBtn = $('termsRejectBtn');
 
-function loadHistorial(){
-  const arr=readJSON(CARRERAS_KEY); const el=document.getElementById('historialList'); el.innerHTML='';
-  const current=localStorage.getItem('sigra_current');
-  arr.filter(x=>x.email===current).slice().reverse().forEach(c=>{
-    const d=new Date(c.date);
-    const row=document.createElement('div');
-    row.innerText=`${d.toLocaleDateString()} — Neto: $${c.neto.toFixed(2)}`;
-    el.appendChild(row);
-  })
-}
+  // Theme buttons
+  const themeTopBtn = $('themeTopBtn'), themeAppBtn = $('themeAppBtn');
 
-function loadTotals(){
-  const arr=readJSON(CARRERAS_KEY); const current=localStorage.getItem('sigra_current');
-  const totales=arr.filter(x=>x.email===current).reduce((acc,v)=>{
-    acc.neto+=v.neto; acc.gasolina+=v.gasolinaFija+v.gasolina; acc.carro+=v.pagoCarro; acc.mantenimiento+=v.mantenimiento; acc.otros+=v.otros;
-    return acc;
-  },{neto:0,gasolina:0,carro:0,mantenimiento:0,otros:0});
-  const el=document.getElementById('totales');
-  el.innerHTML=`<div>Neto: $${totales.neto.toFixed(2)}</div>
-                <div>Gasolina: $${totales.gasolina.toFixed(2)}</div>
-                <div>Pago carro: $${totales.carro.toFixed(2)}</div>
-                <div>Mantenimiento: $${totales.mantenimiento.toFixed(2)}</div>
-                <div>Otros: $${totales.otros.toFixed(2)}</div>`;
-}
+  // Simple helpers
+  function showLoginView(){ loginView.classList.remove('hidden'); registerView.classList.add('hidden'); }
+  function showRegisterView(){ loginView.classList.add('hidden'); registerView.classList.remove('hidden'); }
 
-function renderChart(){
-  const ctx = document.getElementById('grafico').getContext('2d');
-  if(window.myChart) window.myChart.destroy();
+  // Hide splash and show proper view
+  function finishSplashAndInit(user){
+    splash.style.display = 'none';
+    if(user){
+      openAppForUser(user);
+    }else{
+      authWrap.style.display = 'flex';
+    }
+  }
 
-  const arr = readJSON(CARRERAS_KEY).filter(x => x.email === localStorage.getItem('sigra_current')).slice(-10);
-  const labels = arr.map(c => new Date(c.date).toLocaleDateString());
-  const ganancia = arr.map(c => c.neto); 
-  const gastos = arr.map(c => c.gasolinaFija + c.gasolina + c.pagoCarro + c.mantenimiento + c.otros);
+  // ---------- Theme ----------
+  function loadTheme(){
+    const t = localStorage.getItem('sigra_theme');
+    if(t === 'light') document.body.classList.add('light-theme'), setThemeIcons('☀️');
+    else document.body.classList.remove('light-theme'), setThemeIcons('🌙');
+  }
+  function toggleTheme(){
+    document.body.classList.toggle('light-theme');
+    const now = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+    localStorage.setItem('sigra_theme', now);
+    setThemeIcons(now === 'light' ? '☀️' : '🌙');
+  }
+  function setThemeIcons(ch){ themeTopBtn.textContent = ch; themeAppBtn.textContent = ch; }
 
-  window.myChart = new Chart(ctx,{
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Ganancia',
-          data: ganancia,
-          backgroundColor: 'green'
-        },
-        {
-          label: 'Gastos',
-          data: gastos,
-          backgroundColor: 'red'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        datalabels: {
-          anchor: 'end',
-          align: 'top',
-          color: '#fff',
-          font: { weight: 'bold' },
-          formatter: val => `$${val.toFixed(2)}`
-        }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    },
-    plugins: [ChartDataLabels]
+  themeTopBtn.addEventListener('click', toggleTheme);
+  themeAppBtn.addEventListener('click', toggleTheme);
+
+  // ---------- Auth actions (Firebase) ----------
+  btnShowRegister.addEventListener('click', ()=>{ showRegisterView(); });
+  btnBackLogin.addEventListener('click', ()=>{ showLoginView(); });
+
+  btnCreate.addEventListener('click', async ()=>{
+    const name = $('regName').value.trim();
+    const last = $('regLast').value.trim();
+    const email = $('regEmail').value.trim().toLowerCase();
+    const pass = $('regPass').value;
+    const pass2 = $('regPass2').value;
+
+    if(!name || !last || !email || !pass){ alert('Completa todos los campos'); return; }
+    if(!email.endsWith('@gmail.com')){ alert('Debe usar un correo @gmail.com'); return; }
+    if(pass.length < 4){ alert('La contraseña debe tener al menos 4 caracteres'); return; }
+    if(pass !== pass2){ alert('Las contraseñas no coinciden'); return; }
+    if(!$('acceptTerms').checked){ alert('Debes aceptar los términos'); return; }
+
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      // Optionally store profile in Firestore 'users' collection
+      await addDoc(collection(db, 'users'), { uid: cred.user.uid, email, name, last, created: serverTimestamp() });
+      alert('Cuenta creada. Ya puedes iniciar sesión.');
+      showLoginView();
+    }catch(err){
+      console.error(err);
+      alert('Error crear cuenta: ' + (err.message || err));
+    }
   });
-}
 
-function exportPDF() {
-    const { jsPDF } = window.jspdf;
-    const carreras = readJSON(CARRERAS_KEY).filter(c => c.email === localStorage.getItem('sigra_current'));
-    
-    if (!carreras.length) {
-        alert('No hay carreras para exportar');
-        return;
+  btnLogin.addEventListener('click', async ()=>{
+    const email = $('loginEmail').value.trim().toLowerCase();
+    const pass = $('loginPass').value;
+    if(!email || !pass){ alert('Escribe correo y contraseña'); return; }
+    try{
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      // record session in Firestore
+      await addDoc(collection(db, 'sessions'), { uid: cred.user.uid, email: cred.user.email, date: serverTimestamp() });
+      openAppForUser(cred.user);
+    }catch(err){
+      console.error(err);
+      alert('Error login: ' + (err.message || err));
+    }
+  });
+
+  btnLogout.addEventListener('click', async ()=>{
+    try{ await signOut(auth); location.reload(); } catch(e){ console.error(e); alert('Error al cerrar sesión'); }
+  });
+
+  // Listen for auth state changes (keeps UI in sync)
+  onAuthStateChanged(auth, user => {
+    if(user){
+      // If the app is already visible, just update user label, otherwise finish splash -> open app
+      if(appWrap.style.display === 'block') currentUserLabel.innerText = user.email;
+      else finishSplashAndInit(user);
+    } else {
+      // no user logged
+      if(splash.style.display !== 'none') {
+        // let splash finish then show login
+        setTimeout(()=>finishSplashAndInit(null), 1500);
+      } else {
+        authWrap.style.display = 'flex'; appWrap.style.display = 'none';
+      }
+    }
+  });
+
+  // ---------- Firestore helpers ----------
+  async function saveCarreraToFirestore(carrera){
+    // carrera is an object { uid, email, tarifa, gasolinaFija, gasolina, pagoCarro, mantenimiento, otros, neto, tiempo, date }
+    try{
+      await addDoc(collection(db,'carreras'), { ...carrera, created: serverTimestamp() });
+      return true;
+    }catch(e){
+      console.error('saveCarrera', e);
+      return false;
+    }
+  }
+
+  async function fetchCarrerasForUser(uid){
+    const q = query(collection(db,'carreras'), where('uid','==',uid), orderBy('created','desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // ---------- Calculation UI ----------
+  function getLastFuelPrice(){ return PRECIOS_COMBUSTIBLE.g95; }
+  function loadFuelPricesUI(){
+    fuelList.innerHTML = `
+      <div>95: $${PRECIOS_COMBUSTIBLE.g95.toFixed(2)}</div>
+      <div>90: $${PRECIOS_COMBUSTIBLE.g90.toFixed(2)}</div>
+      <div>Diésel: $${PRECIOS_COMBUSTIBLE.diesel.toFixed(2)}</div>
+    `;
+  }
+
+  btnCalcular.addEventListener('click', ()=>{
+    const tarifa = parseFloat($('tarifa').value) || 0;
+    const pagoCarro = parseFloat($('pagoCarro').value) || 0;
+    const mantenimiento = parseFloat($('mantenimiento').value) || 0;
+    const otros = parseFloat($('otros').value) || 0;
+    // Gasolina is visual only
+    const neto = tarifa - (pagoCarro + mantenimiento + otros);
+    resultadoEl.innerText = `Ganancia estimada: $${neto.toFixed(2)}`;
+  });
+
+  // ---------- Save carrera ----------
+  btnGuardar.addEventListener('click', async ()=>{
+    const user = auth.currentUser;
+    if(!user){ alert('No estás logueado'); return; }
+
+    const tarifa = parseFloat($('tarifa').value) || 0;
+    const gasolinaFija = getLastFuelPrice();
+    const gasolina = parseFloat($('gasolina').value) || 0;
+    const pagoCarro = parseFloat($('pagoCarro').value) || 0;
+    const mantenimiento = parseFloat($('mantenimiento').value) || 0;
+    const otros = parseFloat($('otros').value) || 0;
+    const tiempo = parseFloat($('tiempo').value) || 0;
+
+    // neto excludes gasoline (visual)
+    const neto = tarifa - (pagoCarro + mantenimiento + otros);
+
+    const carrera = {
+      uid: user.uid,
+      email: user.email,
+      tarifa, gasolinaFija, gasolina, pagoCarro, mantenimiento, otros, neto, tiempo, date: new Date().toISOString()
+    };
+
+    const ok = await saveCarreraToFirestore(carrera);
+    if(ok){
+      alert('Guardado (Firestore)');
+      await loadHistorialAndTotals(); renderChart();
+    } else {
+      alert('Error al guardar (ver consola)');
+    }
+  });
+
+  // ---------- Load historial / totals ----------
+  async function loadHistorialAndTotals(){
+    const user = auth.currentUser;
+    if(!user) return;
+    historialList.innerHTML = '<div class="muted small">Cargando...</div>';
+    const carreras = await fetchCarrerasForUser(user.uid);
+    // render historial
+    if(!carreras.length){ historialList.innerHTML = '<div class="small muted">No hay carreras</div>'; }
+    else{
+      historialList.innerHTML = '';
+      carreras.forEach(c => {
+        const d = new Date(c.created?.seconds ? c.created.seconds * 1000 : c.date || Date.now());
+        const div = document.createElement('div');
+        div.innerText = `${d.toLocaleDateString()} — Neto: $${(c.neto||0).toFixed(2)}`;
+        historialList.appendChild(div);
+      });
     }
 
+    // totals
+    const tot = carreras.reduce((acc,c)=>{
+      acc.neto += (c.neto||0);
+      acc.gasolina += ((c.gasolinaFija||0) + (c.gasolina||0));
+      acc.carro += (c.pagoCarro||0);
+      acc.mantenimiento += (c.mantenimiento||0);
+      acc.otros += (c.otros||0);
+      return acc;
+    }, { neto:0, gasolina:0, carro:0, mantenimiento:0, otros:0 });
+
+    totalesEl.innerHTML = `
+      <div>Neto: $${tot.neto.toFixed(2)}</div>
+      <div>Gasolina (visual): $${tot.gasolina.toFixed(2)}</div>
+      <div>Pago carro: $${tot.carro.toFixed(2)}</div>
+      <div>Mantenimiento: $${tot.mantenimiento.toFixed(2)}</div>
+      <div>Otros: $${tot.otros.toFixed(2)}</div>
+    `;
+
+    return carreras;
+  }
+
+  btnRefresh.addEventListener('click', async ()=>{ await loadHistorialAndTotals(); renderChart(); });
+
+  // ---------- Chart ----------
+  let myChart = null;
+  async function renderChart(){
+    const user = auth.currentUser;
+    if(!user) return;
+    const carreras = await fetchCarrerasForUser(user.uid);
+    const arr = carreras.slice(0,10).reverse(); // take most recent 10 and reverse to show oldest->newest
+    const labels = arr.map(c => new Date(c.created?.seconds ? c.created.seconds*1000 : c.date).toLocaleDateString());
+    const ganancia = arr.map(c => c.neto || 0);
+    const gastos = arr.map(c => ( (c.gasolinaFija||0) + (c.gasolina||0) + (c.pagoCarro||0) + (c.mantenimiento||0) + (c.otros||0) ));
+
+    const ctx = $('grafico').getContext('2d');
+    if(myChart) myChart.destroy();
+    myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Ganancia', data: ganancia, backgroundColor: 'rgba(0,200,102,0.8)' },
+          { label: 'Gastos (visual)', data: gastos, backgroundColor: 'rgba(220,53,69,0.8)' }
+        ]
+      },
+      options: {
+        responsive:true,
+        plugins: {
+          legend:{ position:'top' },
+          datalabels: { anchor:'end', align:'top', color:'#fff', font:{weight:'bold'}, formatter: v => `$${v.toFixed(2)}` }
+        },
+        scales: { y: { beginAtZero:true } }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
+
+  // ---------- export PDF ----------
+  btnPDF.addEventListener('click', exportPDF);
+  async function exportPDF(){
+    const user = auth.currentUser;
+    if(!user){ alert('No estás logueado'); return; }
+    const carreras = await fetchCarrerasForUser(user.uid);
+    if(!carreras.length){ alert('No hay carreras para exportar'); return; }
+
+    const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
 
-    // Colores profesionales
-    const primaryColor = [41, 128, 185];    // Azul profesional
-    const secondaryColor = [52, 73, 94];    // Gris oscuro
-    const accentColor = [231, 76, 60];      // Rojo para resaltar
-    const lightGray = [236, 240, 241];      // Gris claro para fondos
+    // Colors
+    const primaryColor = [41,128,185];
+    const secondaryColor = [52,73,94];
+    const accentColor = [231,76,60];
 
-    // === ENCABEZADO PROFESIONAL ===
-    // Fondo del encabezado
+    // Header
     doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, pageWidth, 35, 'F');
+    doc.rect(0,0,pageWidth,36,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(16);
+    doc.text('HISTORIAL DE CARRERAS - SIGRA', 18, 22);
 
-    // Logo/Icono simulado (círculo con iniciales)
-    doc.setFillColor(255, 255, 255);
-    doc.circle(20, 17, 8, 'F');
-    doc.setFontSize(12);
-    doc.setTextColor(...primaryColor);
-    doc.setFont("helvetica", "bold");
-    doc.text("SG", 16.5, 18);
-
-    // Título principal
-    doc.setFontSize(22);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.text("HISTORIAL DE CARRERAS", 35, 18);
-
-    // Subtítulo
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text("Sistema Integral de Gestión de Rutas y Análisis", 35, 26);
-
-    // === INFORMACIÓN DEL REPORTE ===
-    const currentDate = new Date().toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-
+    // Info
     doc.setTextColor(...secondaryColor);
     doc.setFontSize(10);
-    doc.text(`Generado el: ${currentDate}`, 14, 45);
-    doc.text(`Total de registros: ${carreras.length}`, 14, 52);
-    doc.text(`Usuario: ${localStorage.getItem('sigra_current') || 'N/A'}`, 14, 59);
+    const now = new Date();
+    doc.text(`Generado: ${now.toLocaleString()}`, 14, 46);
+    doc.text(`Usuario: ${user.email}`, 14, 52);
+    doc.text(`Total registros: ${carreras.length}`, 14, 58);
 
-    // Línea separadora
-    doc.setDrawColor(...primaryColor);
-    doc.setLineWidth(0.5);
-    doc.line(14, 65, pageWidth - 14, 65);
-
-    // === CÁLCULOS DE RESUMEN ===
-    const totales = carreras.reduce((acc, carrera) => ({
-        tarifa: acc.tarifa + carrera.tarifa,
-        gasolina: acc.gasolina + (carrera.gasolinaFija + carrera.gasolina),
-        pagoCarro: acc.pagoCarro + carrera.pagoCarro,
-        mantenimiento: acc.mantenimiento + carrera.mantenimiento,
-        otros: acc.otros + carrera.otros,
-        neto: acc.neto + carrera.neto
-    }), { tarifa: 0, gasolina: 0, pagoCarro: 0, mantenimiento: 0, otros: 0, neto: 0 });
-
-    // === TABLA DE DATOS ===
-    const tableData = carreras.map((c, index) => [
-        (index + 1).toString(), // Número de fila
-        new Date(c.date).toLocaleDateString('es-ES'),
-        new Date(c.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-        `$${c.tarifa.toFixed(2)}`,
-        `$${(c.gasolinaFija + c.gasolina).toFixed(2)}`,
-        `$${c.pagoCarro.toFixed(2)}`,
-        `$${c.mantenimiento.toFixed(2)}`,
-        `$${c.otros.toFixed(2)}`,
-        `$${c.neto.toFixed(2)}`
-    ]);
-
-    // Configuración de la tabla principal
-    doc.autoTable({
-        startY: 75,
-        head: [['#', 'Fecha', 'Hora', 'Tarifa', 'Gasolina', 'Pago Carro', 'Mantenimiento', 'Otros', 'Neto']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: {
-            fillColor: primaryColor,
-            textColor: [255, 255, 255],
-            fontSize: 9,
-            fontStyle: 'bold',
-            halign: 'center'
-        },
-        bodyStyles: {
-            fontSize: 8,
-            textColor: secondaryColor
-        },
-        alternateRowStyles: {
-            fillColor: [248, 249, 250]
-        },
-        columnStyles: {
-            0: { halign: 'center', cellWidth: 12 },
-            1: { halign: 'center', cellWidth: 25 },
-            2: { halign: 'center', cellWidth: 18 },
-            3: { halign: 'right', cellWidth: 22 },
-            4: { halign: 'right', cellWidth: 22 },
-            5: { halign: 'right', cellWidth: 22 },
-            6: { halign: 'right', cellWidth: 25 },
-            7: { halign: 'right', cellWidth: 18 },
-            8: { halign: 'right', cellWidth: 22, fontStyle: 'bold', textColor: accentColor }
-        },
-        margin: { left: 14, right: 14 }
+    // Table
+    const tableData = carreras.map((c, i) => {
+      const d = new Date(c.created?.seconds ? c.created.seconds*1000 : c.date || Date.now());
+      return [
+        (i+1).toString(),
+        d.toLocaleDateString(),
+        d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit'}),
+        `$${(c.tarifa||0).toFixed(2)}`,
+        `$${(((c.gasolinaFija||0) + (c.gasolina||0))).toFixed(2)}`,
+        `$${(c.pagoCarro||0).toFixed(2)}`,
+        `$${(c.mantenimiento||0).toFixed(2)}`,
+        `$${(c.otros||0).toFixed(2)}`,
+        `$${(c.neto||0).toFixed(2)}`
+      ];
     });
 
-    // === TABLA DE TOTALES ===
-    const finalY = doc.lastAutoTable.finalY + 10;
-    
-    // Título de resumen
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
+    doc.autoTable({
+      startY: 66,
+      head: [['#','Fecha','Hora','Tarifa','Gasolina','Pago Carro','Mantenimiento','Otros','Neto']],
+      body: tableData,
+      styles: { fontSize:8 },
+      headStyles: { fillColor: primaryColor, textColor: [255,255,255] },
+      margin: { left: 12, right: 12 }
+    });
+
+    // Totals
+    const lastY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 66;
+    const totals = carreras.reduce((acc,c)=>{
+      acc.tarifa += (c.tarifa||0);
+      acc.gasolina += ((c.gasolinaFija||0) + (c.gasolina||0));
+      acc.pagoCarro += (c.pagoCarro||0);
+      acc.mantenimiento += (c.mantenimiento||0);
+      acc.otros += (c.otros||0);
+      acc.neto += (c.neto||0);
+      return acc;
+    }, { tarifa:0, gasolina:0, pagoCarro:0, mantenimiento:0, otros:0, neto:0 });
+
+    doc.setFontSize(12);
     doc.setTextColor(...secondaryColor);
-    doc.text("RESUMEN FINANCIERO", 14, finalY);
-
-    const resumenData = [
-        ['Total Ingresos (Tarifas)', `$${totales.tarifa.toFixed(2)}`],
-        ['Total Gasolina', `$${totales.gasolina.toFixed(2)}`],
-        ['Total Pago Carro', `$${totales.pagoCarro.toFixed(2)}`],
-        ['Total Mantenimiento', `$${totales.mantenimiento.toFixed(2)}`],
-        ['Total Otros Gastos', `$${totales.otros.toFixed(2)}`],
-        ['GANANCIA NETA TOTAL', `$${totales.neto.toFixed(2)}`]
-    ];
+    doc.text('RESUMEN FINANCIERO', 14, lastY + 8);
 
     doc.autoTable({
-        startY: finalY + 8,
-        body: resumenData,
-        theme: 'plain',
-        bodyStyles: {
-            fontSize: 11,
-            textColor: secondaryColor
-        },
-        columnStyles: {
-            0: { 
-                fontStyle: 'bold',
-                cellWidth: 100,
-                halign: 'left'
-            },
-            1: { 
-                fontStyle: 'bold',
-                cellWidth: 40,
-                halign: 'right'
-            }
-        },
-        didParseCell: function(data) {
-            // Resaltar la fila de ganancia neta
-            if (data.row.index === resumenData.length - 1) {
-                data.cell.styles.fillColor = primaryColor;
-                data.cell.styles.textColor = [255, 255, 255];
-                data.cell.styles.fontSize = 12;
-            }
-        },
-        margin: { left: 14, right: 14 }
+      startY: lastY + 12,
+      body: [
+        ['Total Tarifas', `$${totals.tarifa.toFixed(2)}`],
+        ['Total Gasolina (visual)', `$${totals.gasolina.toFixed(2)}`],
+        ['Pago Carro', `$${totals.pagoCarro.toFixed(2)}`],
+        ['Mantenimiento', `$${totals.mantenimiento.toFixed(2)}`],
+        ['Otros', `$${totals.otros.toFixed(2)}`],
+        ['GANANCIA NETA TOTAL', `$${totals.neto.toFixed(2)}`]
+      ],
+      theme:'plain',
+      columnStyles: { 0:{ halign:'left', cellWidth:120 }, 1:{ halign:'right' } },
+      margin:{ left:14, right:14 }
     });
 
-    // === PIE DE PÁGINA ===
-    const finalFooterY = doc.lastAutoTable.finalY + 20;
-    
-    // Línea separadora del pie
-    doc.setDrawColor(...lightGray);
-    doc.setLineWidth(0.3);
-    doc.line(14, finalFooterY, pageWidth - 14, finalFooterY);
-
-    // Información del pie
-    doc.setFontSize(9);
-    doc.setTextColor(150, 150, 150);
-    doc.setFont("helvetica", "normal");
-    doc.text("SIGRA - Sistema Integral de Gestión de Rutas y Análisis", 14, finalFooterY + 8);
-    doc.text(`Reporte generado automáticamente el ${currentDate}`, 14, finalFooterY + 15);
-    
-    // Número de página
-    doc.text(`Página 1`, pageWidth - 30, finalFooterY + 8);
-
-    // === GUARDAR ARCHIVO ===
-    const fileName = `SIGRA_Historial_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const fileName = `SIGRA_Historial_${new Date().toISOString().slice(0,10)}.pdf`;
     doc.save(fileName);
+    console.log('PDF guardado', fileName);
+  }
 
-    // Mensaje de confirmación
-    console.log(`PDF generado exitosamente: ${fileName}`);
-}
-function showAppForUser(email){
-  document.getElementById('authWrap').style.display='none';
-  document.getElementById('appWrap').style.display='block';
-  document.getElementById('currentUserLabel').innerText=email;
-  loadHistorial(); loadTotals(); loadFuelPrices(); renderChart();
-}
+  // ---------- Sessions modal ----------
+  btnSessions.addEventListener('click', async ()=>{
+    sessionsModal.classList.add('show');
+    // Fetch latest sessions from Firestore (simple query)
+    try{
+      const q = query(collection(db,'sessions'), orderBy('date','desc'));
+      const snap = await getDocs(q);
+      sessionsList.innerHTML = '';
+      snap.docs.slice(0,30).forEach(d=>{
+        const data = d.data();
+        const dDate = data.date?.seconds ? new Date(data.date.seconds*1000) : new Date();
+        const el = document.createElement('div');
+        el.innerText = `${data.email || data.uid} — ${dDate.toLocaleString()}`;
+        sessionsList.appendChild(el);
+      });
+      if(!sessionsList.children.length) sessionsList.innerHTML = '<div class="small muted">No hay sesiones</div>';
+    }catch(e){ console.error(e); sessionsList.innerHTML = '<div class="small muted">Error cargando sesiones</div>'; }
+  });
+  closeSessionsBtn.addEventListener('click', ()=> sessionsModal.classList.remove('show'));
 
-window.addEventListener('load',()=>{
-  // Cargar tema guardado
-  loadTheme();
-  
-  setTimeout(()=>{
-    document.getElementById('splash').style.opacity=0;
-    setTimeout(()=>{
-      document.getElementById('splash').style.display='none';
-      updateUserCount();
-    },500)
-  },1500)
-})
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  // Terms modal handlers
+  $('linkTerms').addEventListener('click', (e)=>{ e.preventDefault(); termsModal.classList.add('show'); });
+  $('linkTerms2').addEventListener('click', (e)=>{ e.preventDefault(); termsModal.classList.add('show'); });
+  termsAcceptBtn.addEventListener('click', ()=>{ $('acceptTerms').checked = true; termsModal.classList.remove('show'); });
+  termsRejectBtn.addEventListener('click', ()=>{ $('acceptTerms').checked = false; termsModal.classList.remove('show'); });
 
-// ⚠️ Reemplaza con tus datos de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCl55k6nUohSTnkcJvzc01ZtlIrgy7qIpI",
-  authDomain: "sigra-b1d1b.firebaseapp.com",
-  projectId: "sigra-b1d1b",
-  storageBucket: "sigra-b1d1b.firebasestorage.app",
-  messagingSenderId: "171804390742",
-  appId: "1:171804390742:web:d4f73b2ce921fd8bc252f7",
-  measurementId: "G-TXGV25GJRE"
-};
+  // ---------- Utilities ----------
+  async function openAppForUser(user){
+    authWrap.style.display = 'none';
+    appWrap.style.display = 'block';
+    currentUserLabel.innerText = user.email;
+    loadFuelPricesUI();
+    await loadHistorialAndTotals();
+    await renderChart();
+  }
 
-// Inicializar
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+  // Splash hide + theme init + userCount local (optional)
+  window.addEventListener('load', ()=>{
+    loadTheme();
+    // remove splash after short delay (visual)
+    setTimeout(()=>{ splash.style.opacity = 0; setTimeout(()=>{ splash.style.display = 'none'; }, 400) }, 1200);
 
-console.log("✅ Firebase conectado", app.name);
-</script>
+    // show local userCount (number of users in localStorage 'users' collection) - not authoritative
+    // For demo: count Firestore users is possible but requires getDocs; we avoid on load heavy operations.
+    try{ const localUsers = JSON.parse(localStorage.getItem('sigra_users') || '[]'); userCountEl.innerText = Array.isArray(localUsers) ? localUsers.length : 0; }catch(e){ userCountEl.innerText = 0; }
+  });
+
+  </script>
 </body>
 </html>
+
