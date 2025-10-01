@@ -331,37 +331,6 @@ footer{margin-top:12px; text-align:center; color:var(--text-muted); font-size:.8
 </div>
 
 <script>
-  window.addEventListener("load", () => {
-  const splash = document.getElementById("splash");
-  const authWrap = document.getElementById("authWrap");
-  const appWrap = document.getElementById("appWrap");
-
-  // Quitar splash después de 2.5s
-  setTimeout(() => {
-    splash.style.display = "none";
-
-    // Si hay usuario logueado, abre app, si no, login
-    const current = localStorage.getItem("sigra_current");
-    if (current) {
-      showAppForUser(current);
-    } else {
-      authWrap.style.display = "flex";
-    }
-  }, 2500);
-});
-
-// Mostrar app después del login
-function showAppForUser(email) {
-  document.getElementById("authWrap").style.display = "none";
-  document.getElementById("appWrap").style.display = "block";
-  document.getElementById("currentUserLabel").textContent = email;
-  loadFuelPrices();
-  loadHistorial();
-  loadTotals();
-  renderChart();
-  updateUserCount();
-  loadTheme();
-}
 const USERS_KEY='sigra_users';
 const SESSIONS_KEY='sigra_sessions';
 const CARRERAS_KEY='sigra_carreras';
@@ -848,12 +817,51 @@ const db = getFirestore(app);
 
 console.log("✅ Firebase conectado", app.name);
 </script>
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const splash = document.getElementById("splash");
+  const authWrap = document.getElementById("authWrap");
+  const appWrap = document.getElementById("appWrap");
+
+  // Seguridad: primero oculta todo
+  authWrap.style.display = "none";
+  appWrap.style.display = "none";
+
+  // Mostrar splash y luego quitarlo
+  setTimeout(() => {
+    if (splash) splash.style.display = "none";
+
+    const current = localStorage.getItem("sigra_current");
+    if (current) {
+      // Si hay sesión activa
+      showAppForUser(current);
+    } else {
+      // Si no hay sesión, mostrar login
+      authWrap.style.display = "flex";
+    }
+  }, 2000); // 2s
+});
+
+function showAppForUser(email) {
+  const authWrap = document.getElementById("authWrap");
+  const appWrap = document.getElementById("appWrap");
+
+  if (authWrap) authWrap.style.display = "none";
+  if (appWrap) appWrap.style.display = "block";
+
+  document.getElementById("currentUserLabel").textContent = email;
+
+  // inicializaciones
+  loadFuelPrices();
+  loadHistorial();
+  loadTotals();
+  renderChart();
+  updateUserCount();
+  loadTheme();
+}
+</script>
 </body>
 </html>
-
-
-
-
 
 
 
